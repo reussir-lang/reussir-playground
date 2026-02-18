@@ -1,0 +1,258 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+body.resizing-horizontal,
+body.resizing-vertical {
+    user-select: none;
+}
+
+/* Toolbar */
+.toolbar {
+    padding: 8px 16px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #404040;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.logo {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e0e0e0;
+    margin-right: auto;
+    white-space: nowrap;
+}
+
+.toolbar select,
+.toolbar button {
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: #3c3c3c;
+    color: #d4d4d4;
+    cursor: pointer;
+}
+
+.toolbar select:hover,
+.toolbar button:hover {
+    background: #4a4a4a;
+}
+
+.toolbar button {
+    background: #0e639c;
+    border-color: #0e639c;
+    color: #fff;
+    font-weight: 600;
+}
+
+.toolbar button:hover {
+    background: #1177bb;
+}
+
+.toolbar button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Main layout */
+.main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Editor pane (left) */
+.editor-pane {
+    flex: 0 0 55%;
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.editor-section {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.editor-label {
+    padding: 4px 12px;
+    background: #252525;
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+}
+
+.editor-container,
+.driver-container {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+}
+
+/* Output pane (right) */
+.output-pane {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    min-height: 0;
+}
+
+.output-label {
+    padding: 4px 12px;
+    background: #252525;
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+}
+
+#output {
+    flex: 1;
+    padding: 12px;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: auto;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    min-height: 0;
+}
+
+#output.error {
+    color: #f48771;
+}
+
+#output.loading {
+    color: #888;
+    font-style: italic;
+}
+
+/* Divider styling */
+.panel-divider {
+    background: #3a3a3a;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.panel-divider:hover {
+    background: #5e5e5e;
+}
+
+.panel-divider:active,
+body.resizing-horizontal .panel-divider-vertical,
+body.resizing-vertical .panel-divider-horizontal {
+    background: #7a7a7a;
+}
+
+.panel-divider-horizontal {
+    height: 6px;
+    cursor: row-resize;
+}
+
+.panel-divider-horizontal::before,
+.panel-divider-vertical::before {
+    content: '';
+    position: absolute;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.panel-divider-horizontal::before {
+    height: 1px;
+    left: 24px;
+    right: 24px;
+    top: 2px;
+}
+
+.panel-divider-horizontal::after,
+.panel-divider-vertical::after {
+    content: '';
+    position: absolute;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.panel-divider-horizontal::after {
+    height: 1px;
+    left: 24px;
+    right: 24px;
+    top: 3px;
+}
+
+.panel-divider-vertical {
+    width: 6px;
+    cursor: col-resize;
+}
+
+.panel-divider-vertical::before {
+    width: 1px;
+    top: 18px;
+    bottom: 18px;
+    left: 2px;
+}
+
+.panel-divider-vertical::after {
+    width: 1px;
+    top: 18px;
+    bottom: 18px;
+    right: 2px;
+}
+
+.panel-divider-horizontal,
+.panel-divider-vertical {
+    touch-action: none;
+}
+
+body.resizing-horizontal {
+    cursor: col-resize;
+}
+
+body.resizing-vertical {
+    cursor: row-resize;
+}
+
+/* Editor textareas */
+#reussir-editor,
+#driver-editor {
+    width: 100%;
+    height: 100%;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: none;
+    outline: none;
+    resize: none;
+    padding: 8px 12px;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    tab-size: 4;
+}
