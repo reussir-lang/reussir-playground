@@ -2,3 +2,5 @@
 /playground-target/
 .envrc
 config.toml
+/bundle-build/node_modules/
+/bundle-build/package-lock.json
