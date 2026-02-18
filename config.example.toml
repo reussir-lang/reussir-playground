@@ -1,0 +1,48 @@
+# Reussir Playground — example configuration
+# Copy to config.toml and adjust for your environment.
+
+# Address to listen on.  Can be overridden with --bind on the CLI.
+bind_addr = "127.0.0.1:3000"
+
+[compiler]
+# Absolute path to the compiled reussir-compiler binary.
+path = "/path/to/reussir-compiler"
+
+# Path to the reussir-rt Cargo project directory (runtime/Cargo.toml lives here).
+# Used as a dependency when building the wasm32-wasip1 harness.  The crate
+# compiles cleanly for wasm — cargo silently drops the dylib crate-type.
+rt_path = "/path/to/reussir/runtime"
+
+# Directory containing the compiler's shared libraries (libMLIRReussirBridge.so etc.).
+# Required when using the landlock sandbox so the restricted compiler process
+# can still dlopen its own dependencies.
+lib_path = "/path/to/reussir/build/lib"
+
+# Shared Cargo target directory for caching harness builds across requests.
+# Using a fixed path avoids recompiling reussir-rt on every run request.
+cargo_target_dir = "playground-target"
+
+# Timeout (seconds) for a single reussir-compiler invocation.
+compile_timeout_secs = 30
+
+# Timeout (seconds) for `cargo build --target wasm32-wasip1`.
+# First build per session is slow (compiles reussir-rt for wasm); subsequent
+# builds are fast thanks to the shared target dir.
+cargo_timeout_secs = 180
+
+[sandbox]
+# Sandboxing backend for compiler invocations.
+#
+#   "bwrap"    — bubblewrap (recommended); requires bwrap in PATH or set
+#                bwrap_path below.  Unshares user/IPC/network namespaces and
+#                presents a minimal read-only rootfs.
+#
+#   "landlock" — Linux Landlock LSM (kernel ≥ 5.13); applied via pre_exec.
+#                No setuid helper needed.  Falls back to no-sandbox on older
+#                kernels with a warning.
+#
+#   "none"     — no sandboxing; for local development only.
+kind = "bwrap"
+
+# Optional: explicit path to the bwrap binary.
+# bwrap_path = "/usr/bin/bwrap"

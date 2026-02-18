@@ -1,4 +1,5 @@
 import { examples } from './examples.js';
+import { runWasm } from './wasi.js';
 
 const sourceEditor = document.getElementById('reussir-editor');
 const driverEditor = document.getElementById('driver-editor');
@@ -35,16 +36,12 @@ const installDividerHandlers = () => {
 
         applyWidth(startWidth);
 
-        const onMouseMove = (e) => {
-            applyWidth(startWidth + (e.clientX - startX));
-        };
-
+        const onMouseMove = (e) => { applyWidth(startWidth + (e.clientX - startX)); };
         const stop = () => {
             document.body.classList.remove('resizing-horizontal');
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', stop);
         };
-
         document.body.classList.add('resizing-horizontal');
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', stop);
@@ -64,16 +61,12 @@ const installDividerHandlers = () => {
 
         applyHeight(startHeight);
 
-        const onMouseMove = (e) => {
-            applyHeight(startHeight + (e.clientY - startY));
-        };
-
+        const onMouseMove = (e) => { applyHeight(startHeight + (e.clientY - startY)); };
         const stop = () => {
             document.body.classList.remove('resizing-vertical');
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', stop);
         };
-
         document.body.classList.add('resizing-vertical');
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', stop);
@@ -82,21 +75,20 @@ const installDividerHandlers = () => {
     sideDivider.addEventListener('mousedown', (event) => {
         if (event.button !== 0) return;
         event.preventDefault();
-        const startX = event.clientX;
-        const startWidth = editorPane.getBoundingClientRect().width;
-        initSideDrag(startX, startWidth, 220, 220);
+        initSideDrag(event.clientX, editorPane.getBoundingClientRect().width, 220, 220);
     });
 
     editorDivider.addEventListener('mousedown', (event) => {
         if (event.button !== 0) return;
         event.preventDefault();
-        const startY = event.clientY;
-        const startHeight = sourcePanel.getBoundingClientRect().height;
-        initEditorDrag(startY, startHeight, 100, 100);
+        initEditorDrag(event.clientY, sourcePanel.getBoundingClientRect().height, 100, 100);
     });
 };
 
-// Populate examples dropdown
+// ---------------------------------------------------------------------------
+// Example selector
+// ---------------------------------------------------------------------------
+
 examples.forEach((ex, i) => {
     const opt = document.createElement('option');
     opt.value = i;
@@ -104,11 +96,9 @@ examples.forEach((ex, i) => {
     exampleSelect.appendChild(opt);
 });
 
-// Load first example
 sourceEditor.value = examples[0].source;
 driverEditor.value = examples[0].driver;
 
-// Event listeners
 exampleSelect.addEventListener('change', () => {
     const ex = examples[exampleSelect.value];
     sourceEditor.value = ex.source;
@@ -130,17 +120,21 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// ---------------------------------------------------------------------------
+// Compile / run
+// ---------------------------------------------------------------------------
+
+const MODE_LABELS = { run: 'Output', 'llvm-ir': 'LLVM IR', asm: 'Assembly', mlir: 'MLIR' };
+
 async function compile() {
     const source = sourceEditor.value;
     const driver = driverEditor.value;
     const mode = modeSelect.value;
 
-    output.textContent = 'Compiling...';
+    output.textContent = mode === 'run' ? 'Compiling to wasm\u2026' : 'Compiling\u2026';
     output.className = 'loading';
     runBtn.disabled = true;
-
-    const modeLabels = { run: 'Output', 'llvm-ir': 'LLVM IR', asm: 'Assembly', mlir: 'MLIR' };
-    outputLabel.textContent = modeLabels[mode] || 'Output';
+    outputLabel.textContent = MODE_LABELS[mode] ?? 'Output';
 
     try {
         const resp = await fetch('/api/compile', {
@@ -148,20 +142,83 @@ async function compile() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ source, driver, mode }),
         });
-        const data = await resp.json();
-        if (data.success) {
-            output.textContent = data.output || '(no output)';
-            output.className = '';
-        } else {
-            output.textContent = data.error || 'Unknown error';
-            output.className = 'error';
+
+        if (!resp.ok) {
+            throw new Error(`server error ${resp.status}: ${resp.statusText}`);
         }
+
+        const data = await resp.json();
+
+        if (!data.success) {
+            output.textContent = data.error ?? 'Unknown compilation error.';
+            output.className = 'error';
+            return;
+        }
+
+        // Text modes — display the returned text directly.
+        if (data.output !== undefined) {
+            output.textContent = data.output || '(empty output)';
+            output.className = '';
+            return;
+        }
+
+        // Run mode — server compiled to wasm, now we execute it in the browser.
+        if (data.wasm !== undefined) {
+            output.textContent = 'Running in browser\u2026';
+
+            const wasmBytes = b64ToBytes(data.wasm);
+            let result;
+            try {
+                result = await runWasm(wasmBytes);
+            } catch (e) {
+                output.textContent = `WASI error: ${e.message}`;
+                output.className = 'error';
+                return;
+            }
+
+            let text = result.stdout;
+            if (result.stderr) {
+                if (text) text += '\n';
+                text += `--- stderr ---\n${result.stderr}`;
+            }
+            if (result.exitCode !== 0) {
+                if (text) text += '\n';
+                text += `\nProcess exited with code ${result.exitCode}.`;
+            }
+
+            output.textContent = text || '(no output)';
+            output.className = result.exitCode !== 0 ? 'error' : '';
+            return;
+        }
+
+        // Should not happen.
+        output.textContent = 'Unexpected response from server.';
+        output.className = 'error';
+
     } catch (e) {
-        output.textContent = 'Request failed: ' + e.message;
+        output.textContent = `Request failed: ${e.message}`;
         output.className = 'error';
     } finally {
         runBtn.disabled = false;
     }
 }
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Decode a base64 string to a Uint8Array without a dependency on atob.
+ * @param {string} b64
+ * @returns {Uint8Array}
+ */
+function b64ToBytes(b64) {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+}
+
+// ---------------------------------------------------------------------------
 
 installDividerHandlers();
