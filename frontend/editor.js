@@ -10,7 +10,8 @@
  * The Rust driver editor uses the first-class @codemirror/lang-rust parser.
  */
 
-import { EditorView, basicSetup } from 'https://esm.sh/codemirror@6';
+import { basicSetup } from 'https://esm.sh/@codemirror/basic-setup@6';
+import { EditorView } from 'https://esm.sh/@codemirror/view@6';
 import { EditorState } from 'https://esm.sh/@codemirror/state@6';
 import { StreamLanguage } from 'https://esm.sh/@codemirror/language@6';
 import { rust } from 'https://esm.sh/@codemirror/lang-rust@6';
