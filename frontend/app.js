@@ -1,89 +1,104 @@
 import { examples } from './examples.js';
 import { runWasm } from './wasi.js';
+import { createReussirEditor, createDriverEditor } from './editor.js';
 
-const sourceEditor = document.getElementById('reussir-editor');
-const driverEditor = document.getElementById('driver-editor');
+// ---------------------------------------------------------------------------
+// CodeMirror editor instances
+// ---------------------------------------------------------------------------
+
+const sourceView = createReussirEditor(
+    document.getElementById('reussir-editor'),
+    examples[0].source,
+);
+
+const driverView = createDriverEditor(
+    document.getElementById('driver-editor'),
+    examples[0].driver,
+);
+
+/** Read the current document text from a CM6 EditorView. */
+const getText = (view) => view.state.doc.toString();
+
+/** Replace the entire document text in a CM6 EditorView. */
+function setText(view, text) {
+    view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: text },
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Toolbar DOM references
+// ---------------------------------------------------------------------------
+
 const exampleSelect = document.getElementById('example-select');
-const modeSelect = document.getElementById('mode-select');
-const runBtn = document.getElementById('run-btn');
-const output = document.getElementById('output');
-const outputLabel = document.getElementById('output-label');
+const modeSelect    = document.getElementById('mode-select');
+const runBtn        = document.getElementById('run-btn');
+const output        = document.getElementById('output');
+const outputLabel   = document.getElementById('output-label');
 
-const main = document.querySelector('.main');
-const editorPane = document.getElementById('editor-pane');
-const outputPane = document.getElementById('output-pane');
+// ---------------------------------------------------------------------------
+// Resizable dividers
+// ---------------------------------------------------------------------------
+
+const main        = document.querySelector('.main');
+const editorPane  = document.getElementById('editor-pane');
+const outputPane  = document.getElementById('output-pane');
 const sideDivider = document.getElementById('side-divider');
 const editorDivider = document.getElementById('editor-divider');
 const sourcePanel = document.getElementById('source-panel');
 const driverPanel = document.getElementById('driver-panel');
 
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-const installDividerHandlers = () => {
+function installDividerHandlers() {
     if (!sideDivider || !editorDivider) return;
 
-    const initSideDrag = (startX, startWidth, minLeftWidth, minRightWidth) => {
-        const dividerWidth = sideDivider.offsetWidth;
-        const totalWidth = main.clientWidth;
-        const maxLeftWidth = totalWidth - dividerWidth - minRightWidth;
-        const applyWidth = (width) => {
-            const nextWidth = clamp(width, minLeftWidth, maxLeftWidth);
+    sideDivider.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        const startX = e.clientX;
+        const startW = editorPane.getBoundingClientRect().width;
+        const move = (ev) => {
+            const divW = sideDivider.offsetWidth;
+            const total = main.clientWidth;
+            const next = clamp(startW + (ev.clientX - startX), 220, total - divW - 220);
             editorPane.style.flex = '0 0 auto';
-            editorPane.style.flexBasis = `${nextWidth}px`;
+            editorPane.style.flexBasis = `${next}px`;
             outputPane.style.flex = '1 1 auto';
-            return nextWidth;
         };
-
-        applyWidth(startWidth);
-
-        const onMouseMove = (e) => { applyWidth(startWidth + (e.clientX - startX)); };
-        const stop = () => {
+        const up = () => {
             document.body.classList.remove('resizing-horizontal');
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', stop);
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
         };
         document.body.classList.add('resizing-horizontal');
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', stop);
-    };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+    });
 
-    const initEditorDrag = (startY, startHeight, minSourceHeight, minDriverHeight) => {
-        const dividerHeight = editorDivider.offsetHeight;
-        const totalHeight = editorPane.clientHeight;
-        const maxSourceHeight = totalHeight - dividerHeight - minDriverHeight;
-        const applyHeight = (height) => {
-            const nextHeight = clamp(height, minSourceHeight, maxSourceHeight);
+    editorDivider.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        const startY = e.clientY;
+        const startH = sourcePanel.getBoundingClientRect().height;
+        const move = (ev) => {
+            const divH = editorDivider.offsetHeight;
+            const total = editorPane.clientHeight;
+            const next = clamp(startH + (ev.clientY - startY), 100, total - divH - 100);
             sourcePanel.style.flex = '0 0 auto';
-            sourcePanel.style.flexBasis = `${nextHeight}px`;
+            sourcePanel.style.flexBasis = `${next}px`;
             driverPanel.style.flex = '1 1 auto';
-            return nextHeight;
         };
-
-        applyHeight(startHeight);
-
-        const onMouseMove = (e) => { applyHeight(startHeight + (e.clientY - startY)); };
-        const stop = () => {
+        const up = () => {
             document.body.classList.remove('resizing-vertical');
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', stop);
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
         };
         document.body.classList.add('resizing-vertical');
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', stop);
-    };
-
-    sideDivider.addEventListener('mousedown', (event) => {
-        if (event.button !== 0) return;
-        event.preventDefault();
-        initSideDrag(event.clientX, editorPane.getBoundingClientRect().width, 220, 220);
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
     });
-
-    editorDivider.addEventListener('mousedown', (event) => {
-        if (event.button !== 0) return;
-        event.preventDefault();
-        initEditorDrag(event.clientY, sourcePanel.getBoundingClientRect().height, 100, 100);
-    });
-};
+}
 
 // ---------------------------------------------------------------------------
 // Example selector
@@ -96,13 +111,10 @@ examples.forEach((ex, i) => {
     exampleSelect.appendChild(opt);
 });
 
-sourceEditor.value = examples[0].source;
-driverEditor.value = examples[0].driver;
-
 exampleSelect.addEventListener('change', () => {
     const ex = examples[exampleSelect.value];
-    sourceEditor.value = ex.source;
-    driverEditor.value = ex.driver;
+    setText(sourceView, ex.source);
+    setText(driverView, ex.driver);
     output.textContent = 'Select a mode and click Run to compile.';
     output.className = '';
 });
@@ -127,9 +139,9 @@ document.addEventListener('keydown', (e) => {
 const MODE_LABELS = { run: 'Output', 'llvm-ir': 'LLVM IR', asm: 'Assembly', mlir: 'MLIR' };
 
 async function compile() {
-    const source = sourceEditor.value;
-    const driver = driverEditor.value;
-    const mode = modeSelect.value;
+    const source = getText(sourceView);
+    const driver = getText(driverView);
+    const mode   = modeSelect.value;
 
     output.textContent = mode === 'run' ? 'Compiling to wasm\u2026' : 'Compiling\u2026';
     output.className = 'loading';
@@ -143,9 +155,7 @@ async function compile() {
             body: JSON.stringify({ source, driver, mode }),
         });
 
-        if (!resp.ok) {
-            throw new Error(`server error ${resp.status}: ${resp.statusText}`);
-        }
+        if (!resp.ok) throw new Error(`server error ${resp.status}: ${resp.statusText}`);
 
         const data = await resp.json();
 
@@ -155,17 +165,14 @@ async function compile() {
             return;
         }
 
-        // Text modes — display the returned text directly.
         if (data.output !== undefined) {
             output.textContent = data.output || '(empty output)';
             output.className = '';
             return;
         }
 
-        // Run mode — server compiled to wasm, now we execute it in the browser.
         if (data.wasm !== undefined) {
             output.textContent = 'Running in browser\u2026';
-
             const wasmBytes = b64ToBytes(data.wasm);
             let result;
             try {
@@ -175,7 +182,6 @@ async function compile() {
                 output.className = 'error';
                 return;
             }
-
             let text = result.stdout;
             if (result.stderr) {
                 if (text) text += '\n';
@@ -185,13 +191,11 @@ async function compile() {
                 if (text) text += '\n';
                 text += `\nProcess exited with code ${result.exitCode}.`;
             }
-
             output.textContent = text || '(no output)';
             output.className = result.exitCode !== 0 ? 'error' : '';
             return;
         }
 
-        // Should not happen.
         output.textContent = 'Unexpected response from server.';
         output.className = 'error';
 
@@ -207,11 +211,6 @@ async function compile() {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Decode a base64 string to a Uint8Array without a dependency on atob.
- * @param {string} b64
- * @returns {Uint8Array}
- */
 function b64ToBytes(b64) {
     const binary = atob(b64);
     const bytes = new Uint8Array(binary.length);

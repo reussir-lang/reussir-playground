@@ -106,13 +106,6 @@ body.resizing-vertical {
     flex-shrink: 0;
 }
 
-.editor-container,
-.driver-container {
-    flex: 1;
-    overflow: auto;
-    min-height: 0;
-}
-
 /* Output pane (right) */
 .output-pane {
     flex: 1 1 auto;
@@ -240,19 +233,24 @@ body.resizing-vertical {
     cursor: row-resize;
 }
 
-/* Editor textareas */
-#reussir-editor,
-#driver-editor {
-    width: 100%;
+/* CodeMirror 6 editor containers */
+.editor-container,
+.driver-container {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Make the CM6 editor fill its container and use our font stack */
+.editor-container .cm-editor,
+.driver-container  .cm-editor {
     height: 100%;
-    background: #1e1e1e;
-    color: #d4d4d4;
-    border: none;
-    outline: none;
-    resize: none;
-    padding: 8px 12px;
     font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
     font-size: 13px;
+}
+
+.editor-container .cm-scroller,
+.driver-container  .cm-scroller {
+    overflow: auto;
     line-height: 1.5;
-    tab-size: 4;
 }
