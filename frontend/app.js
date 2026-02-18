@@ -32,6 +32,7 @@ function setText(view, text) {
 
 const exampleSelect = document.getElementById('example-select');
 const modeSelect    = document.getElementById('mode-select');
+const optSelect     = document.getElementById('opt-select');
 const runBtn        = document.getElementById('run-btn');
 const output        = document.getElementById('output');
 const outputLabel   = document.getElementById('output-label');
@@ -136,12 +137,13 @@ document.addEventListener('keydown', (e) => {
 // Compile / run
 // ---------------------------------------------------------------------------
 
-const MODE_LABELS = { run: 'Output', 'llvm-ir': 'LLVM IR', asm: 'Assembly', mlir: 'MLIR' };
+const MODE_LABELS = { run: 'Output', 'llvm-ir': 'LLVM IR', asm: 'WebAssembly', mlir: 'MLIR' };
 
 async function compile() {
     const source = getText(sourceView);
     const driver = getText(driverView);
     const mode   = modeSelect.value;
+    const opt    = optSelect.value;
 
     output.textContent = mode === 'run' ? 'Compiling to wasm\u2026' : 'Compiling\u2026';
     output.className = 'loading';
@@ -152,7 +154,7 @@ async function compile() {
         const resp = await fetch('/api/compile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ source, driver, mode }),
+            body: JSON.stringify({ source, driver, mode, opt }),
         });
 
         if (!resp.ok) throw new Error(`server error ${resp.status}: ${resp.statusText}`);

@@ -13,8 +13,14 @@
         <select id="mode-select" title="Output mode">
             <option value="run">Run</option>
             <option value="llvm-ir">LLVM IR</option>
-            <option value="asm">Assembly</option>
+            <option value="asm">WebAssembly</option>
             <option value="mlir">MLIR</option>
+        </select>
+        <select id="opt-select" title="Optimization pipeline">
+            <option value="none">No optimization</option>
+            <option value="default">Default</option>
+            <option value="size">Size</option>
+            <option value="aggressive">Aggressive</option>
         </select>
         <button id="run-btn" title="Compile and run (Ctrl+Enter)">&#9654; Run</button>
     </div>

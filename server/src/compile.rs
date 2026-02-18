@@ -4,6 +4,7 @@
 //!
 //! * **text modes** (`llvm-ir`, `asm`, `mlir`) — invoke the reussir compiler
 //!   inside a sandbox, read the textual output, return it as JSON.
+//!   The `asm` mode always targets `wasm32-wasip1` and returns WAT.
 //!
 //! * **run mode** — compile to a `wasm32-wasip1` object inside a sandbox,
 //!   build a Rust harness that links the object and `reussir-rt`, then return
@@ -31,7 +32,12 @@ pub struct CompileRequest {
     source: String,
     driver: String,
     mode: String,
+    /// Optimization level: "none" | "default" | "size" | "aggressive"
+    #[serde(default = "default_opt")]
+    opt: String,
 }
+
+fn default_opt() -> String { "none".to_string() }
 
 #[derive(Serialize)]
 pub struct CompileResponse {
@@ -69,9 +75,13 @@ pub async fn handle(
     State(cfg): State<Arc<Config>>,
     Json(req): Json<CompileRequest>,
 ) -> Json<CompileResponse> {
+    let opt_level = match req.opt.as_str() {
+        "none" | "default" | "size" | "aggressive" => req.opt.as_str(),
+        _ => "none",
+    };
     let result = match req.mode.as_str() {
-        "llvm-ir" | "asm" | "mlir" => compile_text(&cfg, &req).await,
-        "run" => compile_run(&cfg, &req).await,
+        "llvm-ir" | "asm" | "mlir" => compile_text(&cfg, &req, opt_level).await,
+        "run" => compile_run(&cfg, &req, opt_level).await,
         other => Err(anyhow::anyhow!("unknown mode: {other}")),
     };
 
@@ -85,13 +95,14 @@ pub async fn handle(
 // Text output modes (llvm-ir / asm / mlir)
 // ---------------------------------------------------------------------------
 
-async fn compile_text(cfg: &Config, req: &CompileRequest) -> Result<CompileResponse> {
+async fn compile_text(cfg: &Config, req: &CompileRequest, opt: &str) -> Result<CompileResponse> {
     let tmp = TempDir::new().context("failed to create temp dir")?;
     let input = tmp.path().join("input.rr");
+    // `asm` mode targets wasm32-wasip1 and outputs WAT; use .wat extension.
     let ext = match req.mode.as_str() {
         "llvm-ir" => "ll",
-        "asm" => "s",
-        "mlir" => "mlir",
+        "asm"     => "wat",
+        "mlir"    => "mlir",
         _ => unreachable!(),
     };
     let output_path = tmp.path().join(format!("output.{ext}"));
@@ -99,13 +110,21 @@ async fn compile_text(cfg: &Config, req: &CompileRequest) -> Result<CompileRespo
     std::fs::write(&input, &req.source).context("failed to write source")?;
 
     let compiler = &cfg.compiler.path;
-    let args = [
+
+    // For `asm` mode we always target wasm32-wasip1 so the output is WAT.
+    let mut args: Vec<&OsStr> = vec![
         input.as_os_str(),
         OsStr::new("-o"),
         output_path.as_os_str(),
         OsStr::new("-t"),
         OsStr::new(req.mode.as_str()),
+        OsStr::new("--opt-level"),
+        OsStr::new(opt),
     ];
+    if req.mode == "asm" {
+        args.push(OsStr::new("--target-triple"));
+        args.push(OsStr::new("wasm32-wasip1"));
+    }
 
     let extra_ro = compiler_ro_paths(cfg);
     let extra_ro_refs: Vec<&Path> = extra_ro.iter().map(AsRef::as_ref).collect();
@@ -135,7 +154,7 @@ async fn compile_text(cfg: &Config, req: &CompileRequest) -> Result<CompileRespo
 // Run mode — compile to wasm, build harness, return binary
 // ---------------------------------------------------------------------------
 
-async fn compile_run(cfg: &Config, req: &CompileRequest) -> Result<CompileResponse> {
+async fn compile_run(cfg: &Config, req: &CompileRequest, opt: &str) -> Result<CompileResponse> {
     let tmp = TempDir::new().context("failed to create temp dir")?;
     let input_path = tmp.path().join("input.rr");
     let object_path = tmp.path().join("output.o");
@@ -152,6 +171,8 @@ async fn compile_run(cfg: &Config, req: &CompileRequest) -> Result<CompileRespon
         object_path.as_os_str(),
         OsStr::new("-t"),
         OsStr::new("object"),
+        OsStr::new("--opt-level"),
+        OsStr::new(opt),
         OsStr::new("--target-triple"),
         OsStr::new("wasm32-wasip1"),
     ];
