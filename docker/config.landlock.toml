@@ -1,0 +1,12 @@
+bind_addr = "0.0.0.0:3000"
+
+[compiler]
+path = "/opt/reussir/build/bin/reussir-compiler"
+rt_path = "/opt/reussir/runtime"
+lib_path = "/opt/reussir/build/lib"
+cargo_target_dir = "/var/lib/reussir-playground/playground-target"
+compile_timeout_secs = 30
+cargo_timeout_secs = 180
+
+[sandbox]
+kind = "landlock"
