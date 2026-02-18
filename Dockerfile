@@ -159,10 +159,11 @@ RUN mkdir -p /var/lib/reussir-playground/playground-target /tmp/reussir-playgrou
     && chown -R app:app /var/lib/reussir-playground /tmp/reussir-playground /opt/reussir-playground \
     && chmod -R a+rX /opt/reussir
 
+RUN ln -sf /usr/bin/clang-${LLVM_VERSION} /usr/bin/cc
+
 ENV LD_LIBRARY_PATH=/opt/reussir/build/lib:/usr/lib/llvm-${LLVM_VERSION}/lib
 ENV TMPDIR=/tmp/reussir-playground
 ENV RUST_LOG=info
-ENV CC=clang-${LLVM_VERSION}
 
 USER app
 EXPOSE 3000
