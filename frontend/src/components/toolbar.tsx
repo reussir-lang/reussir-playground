@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { BookOpen, Check, ChevronDown, LucideGithub, Moon, Share2, Sun } from "lucide-react";
+import { BookOpen, ChevronDown, LucideGithub, Moon, Share2, Sun } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
+import { toast } from "sonner";
 
 import { examples } from "@/data/examples";
 import { useCompile } from "@/hooks/use-compile";
@@ -82,7 +82,6 @@ export function Toolbar() {
   const setOutput = useSetAtom(outputAtom);
   const compile = useCompile();
   const { theme, toggleTheme } = useTheme();
-  const [copied, setCopied] = useState(false);
 
   const sourceCode = useAtomValue(sourceCodeAtom);
   const driverCode = useAtomValue(driverCodeAtom);
@@ -96,8 +95,7 @@ export function Toolbar() {
     });
     window.history.replaceState(null, "", url);
     await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success("Link copied to clipboard");
   };
 
   const handleExampleSelect = (index: number) => {
@@ -262,7 +260,7 @@ export function Toolbar() {
         className="ml-auto h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
         title="Copy source code"
       >
-        {copied ? <Check size={16} className="text-green-600" /> : <Share2 size={16} />}
+        <Share2 size={16} />
       </button>
 
       <a
