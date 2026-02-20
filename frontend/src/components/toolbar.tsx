@@ -116,13 +116,13 @@ export function Toolbar() {
   };
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-bg-secondary border-b border-border shrink-0">
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 bg-bg-secondary border-b border-border shrink-0">
       <span className="text-base font-bold text-text-heading whitespace-nowrap flex items-center gap-2">
         <img src="/image.png" alt="Reussir" className="h-6 w-6" />
-        Reussir Playground
+        <span className="hidden sm:inline">Reussir Playground</span>
       </span>
 
-      <div className="h-4 w-px bg-border-subtle" />
+      <div className="hidden sm:block h-4 w-px bg-border-subtle" />
 
       {/* Split run button: main action + mode dropdown */}
       <div className="flex items-center">
@@ -176,7 +176,7 @@ export function Toolbar() {
         </DropdownMenu.Root>
       </div>
 
-      <div className="h-4 w-px bg-border-subtle" />
+      <div className="hidden sm:block h-4 w-px bg-border-subtle" />
 
       {/* Config group: example + optimization */}
       <div className="flex items-center gap-1.5">
@@ -254,43 +254,45 @@ export function Toolbar() {
         </DropdownMenu.Root>
       </div>
 
-      <button
-        type="button"
-        onClick={handleShare}
-        className="ml-auto h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
-        title="Copy source code"
-      >
-        <Share2 size={16} />
-      </button>
+      <div className="flex items-center gap-1 sm:ml-auto">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+          title="Copy source code"
+        >
+          <Share2 size={16} />
+        </button>
 
-      <a
-        href="https://reussir-lang.github.io/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
-        title="Documentation"
-      >
-        <BookOpen size={16} />
-      </a>
+        <a
+          href="https://reussir-lang.github.io/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+          title="Documentation"
+        >
+          <BookOpen size={16} />
+        </a>
 
-      <a
-        href="https://github.com/reussir-lang/reussir"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
-        title="Source code"
-      >
-        <LucideGithub size={16} />
-      </a>
+        <a
+          href="https://github.com/reussir-lang/reussir"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+          title="Source code"
+        >
+          <LucideGithub size={16} />
+        </a>
 
-      <button
-        type="button"
-        onClick={toggleTheme}
-        className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
-        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-      </button>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+      </div>
     </div>
   );
 }
