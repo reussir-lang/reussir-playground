@@ -105,6 +105,21 @@ COPY server server
 RUN cargo build --release --locked -p reussir-playground \
     && ./target/release/reussir-playground --help | grep -q "Reussir language playground server"
 
+# ---------------------------------------------------------------------------
+# Stage 3: Build the React frontend
+# ---------------------------------------------------------------------------
+
+FROM node:22-slim AS frontend-builder
+WORKDIR /workspace/frontend
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
+COPY frontend/ .
+RUN pnpm run build
+
+# ---------------------------------------------------------------------------
+# Stage 4: Runtime image
+# ---------------------------------------------------------------------------
+
 FROM ubuntu:${UBUNTU_VERSION} AS runtime
 ARG DEBIAN_FRONTEND=noninteractive
 ARG LLVM_VERSION
@@ -152,7 +167,7 @@ COPY --from=reussir-builder /opt/reussir/build/bin /opt/reussir/build/bin
 COPY --from=reussir-builder /opt/reussir/build/lib /opt/reussir/build/lib
 COPY --from=reussir-builder /opt/reussir/runtime /opt/reussir/runtime
 
-COPY frontend frontend
+COPY --from=frontend-builder /workspace/frontend/dist frontend/dist
 COPY docker/config.landlock.toml /etc/reussir-playground/config.toml
 
 RUN mkdir -p /var/lib/reussir-playground/playground-target /tmp/reussir-playground \

@@ -50,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
     let bind_addr = cfg.bind_addr;
     let cfg = Arc::new(cfg);
 
-    let frontend = ServeDir::new("frontend").append_index_html_on_directories(true);
+    let frontend = ServeDir::new("frontend/dist").append_index_html_on_directories(true);
 
     let app = Router::new()
         .route("/api/compile", post(compile::handle))
