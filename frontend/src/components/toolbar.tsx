@@ -1,5 +1,5 @@
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { ChevronDown, Moon, Sun } from "lucide-react";
+import { BookOpen, ChevronDown, Moon, Sun } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 
 import { examples } from "@/data/examples";
@@ -237,10 +237,20 @@ export function Toolbar() {
         </DropdownMenu.Root>
       </div>
 
+      <a
+        href="https://reussir-lang.github.io/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ml-auto h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+        title="Documentation"
+      >
+        <BookOpen size={16} />
+      </a>
+
       <button
         type="button"
         onClick={toggleTheme}
-        className="ml-auto h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+        className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
         title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       >
         {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
