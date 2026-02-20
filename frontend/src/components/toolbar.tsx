@@ -53,7 +53,8 @@ export function Toolbar() {
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-bg-secondary border-b border-border shrink-0">
-      <span className="text-base font-bold text-text-heading mr-auto whitespace-nowrap">
+      <span className="text-base font-bold text-text-heading mr-auto whitespace-nowrap flex items-center gap-2">
+        <img src="/image.png" alt="Reussir" className="h-5 w-5" />
         Reussir Playground
       </span>
 
