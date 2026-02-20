@@ -1,5 +1,5 @@
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { BookOpen, ChevronDown, Moon, Sun } from "lucide-react";
+import { BookOpen, ChevronDown, LucideGithub, Moon, Sun } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 
 import { examples } from "@/data/examples";
@@ -245,6 +245,16 @@ export function Toolbar() {
         title="Documentation"
       >
         <BookOpen size={16} />
+      </a>
+
+      <a
+        href="https://github.com/reussir-lang/reussir"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+        title="Source code"
+      >
+        <LucideGithub size={16} />
       </a>
 
       <button
