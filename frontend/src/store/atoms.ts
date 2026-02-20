@@ -1,5 +1,10 @@
 import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 import { examples } from "@/data/examples";
+
+// --- Theme ---
+export type Theme = "light" | "dark";
+export const themeAtom = atomWithStorage<Theme>("theme", "dark");
 
 // --- Editor content ---
 export const sourceCodeAtom = atom(examples[0]!.source);

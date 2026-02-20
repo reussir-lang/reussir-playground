@@ -1,5 +1,6 @@
 export interface Example {
   name: string;
+  description: string;
   source: string;
   driver: string;
 }
@@ -7,6 +8,7 @@ export interface Example {
 export const examples: readonly Example[] = [
   {
     name: "Fibonacci (Recursive)",
+    description: "Classic recursive Fibonacci implementation",
     source: `\
 pub fn fibonacci(n: u64) -> u64 {
     if n <= 1 {
@@ -24,6 +26,7 @@ for i in 0u64..10 {
   },
   {
     name: "Fibonacci (Iterative)",
+    description: "Tail-recursive Fibonacci with accumulators",
     source: `\
 fn fibonacci_iter_impl(n: u64, acc0: u64, acc1: u64) -> u64 {
     if n == 0 {
@@ -45,6 +48,7 @@ for i in 0u64..20 {
   },
   {
     name: "Fibonacci (Matrix)",
+    description: "O(log n) Fibonacci via matrix exponentiation",
     source: `\
 struct Matrix<T : Num> {
     m00: T,
@@ -99,6 +103,7 @@ for i in 0u64..10 {
   },
   {
     name: "Tree Count Leaves",
+    description: "Pattern matching on a binary tree ADT",
     source: `\
 enum Tree {
     Leaf(i32),
@@ -133,6 +138,7 @@ println!("count_leaves = {}", count_leaves(tree));`,
   },
   {
     name: "List Sum",
+    description: "Recursive sum over a generic linked list",
     source: `\
 enum List<T> {
     Nil,

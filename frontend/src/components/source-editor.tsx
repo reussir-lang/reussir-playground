@@ -1,12 +1,12 @@
 import { useRef, useCallback } from "react";
 import Editor, { type Monaco, type OnMount } from "@monaco-editor/react";
-import { useAtom } from "jotai";
-import { sourceCodeAtom } from "@/store/atoms";
+import { useAtom, useAtomValue } from "jotai";
+import { sourceCodeAtom, themeAtom } from "@/store/atoms";
 import {
   reussirLanguage,
   reussirLanguageConfig,
 } from "@/lang/reussir-monarch";
-import { reussirDarkTheme } from "@/lang/reussir-theme";
+import { reussirDarkTheme, reussirLightTheme } from "@/lang/reussir-theme";
 import type { editor } from "monaco-editor";
 
 let languageRegistered = false;
@@ -19,10 +19,12 @@ function registerReussirLanguage(monaco: Monaco) {
   monaco.languages.setMonarchTokensProvider("reussir", reussirLanguage);
   monaco.languages.setLanguageConfiguration("reussir", reussirLanguageConfig);
   monaco.editor.defineTheme("reussir-dark", reussirDarkTheme);
+  monaco.editor.defineTheme("reussir-light", reussirLightTheme);
 }
 
 export function SourceEditor() {
   const [sourceCode, setSourceCode] = useAtom(sourceCodeAtom);
+  const theme = useAtomValue(themeAtom);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const handleBeforeMount = useCallback((monaco: Monaco) => {
@@ -45,7 +47,7 @@ export function SourceEditor() {
   return (
     <Editor
       language="reussir"
-      theme="reussir-dark"
+      theme={theme === "dark" ? "reussir-dark" : "reussir-light"}
       value={sourceCode}
       beforeMount={handleBeforeMount}
       onMount={handleMount}

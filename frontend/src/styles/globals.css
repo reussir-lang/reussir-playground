@@ -1,23 +1,66 @@
 @import "tailwindcss";
 
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f8fa;
+  --bg-elevated: #ebedf0;
+  --bg-input: #ffffff;
+  --bg-input-hover: #f0f1f3;
+  --border: #d0d7de;
+  --border-subtle: #d8dee4;
+  --border-input: #b8bfc6;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --text-heading: #1b1f24;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --error: #cf222e;
+  --divider: #d0d7de;
+  --divider-hover: #8c959f;
+  --divider-active: #6e7781;
+  --grip: #959da5;
+}
+
+html.dark {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #2d2d2d;
+  --bg-elevated: #252525;
+  --bg-input: #3c3c3c;
+  --bg-input-hover: #4a4a4a;
+  --border: #404040;
+  --border-subtle: #333;
+  --border-input: #555;
+  --text-primary: #d4d4d4;
+  --text-secondary: #888;
+  --text-heading: #e0e0e0;
+  --accent: #0e639c;
+  --accent-hover: #1177bb;
+  --error: #f48771;
+  --divider: #3a3a3a;
+  --divider-hover: #5e5e5e;
+  --divider-active: #7a7a7a;
+  --grip: #666;
+}
+
 @theme {
-  --color-bg-primary: #1e1e1e;
-  --color-bg-secondary: #2d2d2d;
-  --color-bg-elevated: #252525;
-  --color-bg-input: #3c3c3c;
-  --color-bg-input-hover: #4a4a4a;
-  --color-border: #404040;
-  --color-border-subtle: #333;
-  --color-border-input: #555;
-  --color-text-primary: #d4d4d4;
-  --color-text-secondary: #888;
-  --color-text-heading: #e0e0e0;
-  --color-accent: #0e639c;
-  --color-accent-hover: #1177bb;
-  --color-error: #f48771;
-  --color-divider: #3a3a3a;
-  --color-divider-hover: #5e5e5e;
-  --color-divider-active: #7a7a7a;
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-input: var(--bg-input);
+  --color-bg-input-hover: var(--bg-input-hover);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-input: var(--border-input);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-heading: var(--text-heading);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-error: var(--error);
+  --color-divider: var(--divider);
+  --color-divider-hover: var(--divider-hover);
+  --color-divider-active: var(--divider-active);
+  --color-grip: var(--grip);
   --font-mono: "Fira Code", "Cascadia Code", "Consolas", "Monaco", monospace;
 }
 
