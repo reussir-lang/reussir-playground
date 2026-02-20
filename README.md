@@ -6,7 +6,7 @@ programming language.
 **How it works:**
 - The server compiles Reussir source to a `wasm32-wasip1` object, links it with
   `reussir-rt` via a generated Rust harness, and returns the `.wasm` binary.
-- The browser executes the binary through a built-in WASI shim (`frontend/wasi.js`)
+- The browser executes the binary through a built-in WASI shim
   — **the server never runs user code**.
 - Text output modes (LLVM IR, Assembly, MLIR) invoke the compiler inside a
   sandbox and return the textual output directly.
@@ -16,6 +16,7 @@ programming language.
 | Tool | Notes |
 |---|---|
 | Rust toolchain | stable + `wasm32-wasip1` target (`rustup target add wasm32-wasip1`) |
+| Node.js + pnpm | frontend build toolchain |
 | reussir-compiler | built from [reussir-lang/reussir](https://github.com/reussir-lang/reussir) |
 | bwrap *(or)* Linux 5.13+ | sandboxing; bwrap is the default |
 
@@ -33,13 +34,29 @@ rustup target add wasm32-wasip1
 cp config.example.toml config.toml
 $EDITOR config.toml       # set compiler.path and compiler.rt_path
 
-# 4. Build and run
-cargo build --release -p reussir-playground
-./server/target/release/reussir-playground
-# or: cargo run -p reussir-playground --release
+# 4. Build the frontend
+cd frontend && pnpm install && pnpm build && cd ..
+
+# 5. Build and run the server
+cargo run -p reussir-playground --release
 ```
 
 Then open `http://127.0.0.1:3000` in a browser.
+
+## Development
+
+For local development, run the Vite dev server and the Rust backend separately.
+Vite proxies `/api` requests to the backend automatically.
+
+```bash
+# Terminal 1: start the Rust server
+cargo run -p reussir-playground --release
+
+# Terminal 2: start the frontend dev server (hot reload)
+cd frontend && pnpm dev
+```
+
+Then open `http://localhost:5173`.
 
 ## Configuration
 
@@ -91,10 +108,10 @@ modifying the host.
 ## Architecture
 
 ```
-Browser                         Server (Rust/axum)
+Browser (React/Monaco)          Server (Rust/Axum)
 ──────────────────────          ────────────────────────────────────
- Code editor (CM6)
- Driver editor (Rust)  ─POST──► /api/compile
+ Source editor (Monaco)
+ Driver editor (Rust)   ─POST──► /api/compile
                                   │
                                   ├─ text modes:
                                   │   sandbox.wrap(reussir-compiler …)
@@ -107,7 +124,7 @@ Browser                         Server (Rust/axum)
                                       read .wasm
                                       return { wasm: "<base64>" }
 
- wasi.js ◄──────────────────────────────────────────────────────────
+ WASI shim ◄────────────────────────────────────────────────────────
  WebAssembly.instantiate()
  _start()  →  capture stdout/stderr
  display output

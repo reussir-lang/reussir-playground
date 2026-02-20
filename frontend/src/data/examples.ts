@@ -1,7 +1,13 @@
-export const examples = [
-    {
-        name: 'Fibonacci (Recursive)',
-        source: `\
+export interface Example {
+  name: string;
+  source: string;
+  driver: string;
+}
+
+export const examples: readonly Example[] = [
+  {
+    name: "Fibonacci (Recursive)",
+    source: `\
 pub fn fibonacci(n: u64) -> u64 {
     if n <= 1 {
         n
@@ -11,14 +17,14 @@ pub fn fibonacci(n: u64) -> u64 {
 }
 
 extern "C" trampoline "fibonacci_ffi" = fibonacci;`,
-        driver: `\
+    driver: `\
 for i in 0u64..10 {
     println!("fib({i}) = {}", fibonacci_ffi(i));
 }`,
-    },
-    {
-        name: 'Fibonacci (Iterative)',
-        source: `\
+  },
+  {
+    name: "Fibonacci (Iterative)",
+    source: `\
 fn fibonacci_iter_impl(n: u64, acc0: u64, acc1: u64) -> u64 {
     if n == 0 {
         acc0
@@ -32,14 +38,14 @@ pub fn fibonacci_iter(n: u64) -> u64 {
 }
 
 extern "C" trampoline "fibonacci_iter_ffi" = fibonacci_iter;`,
-        driver: `\
+    driver: `\
 for i in 0u64..20 {
     println!("fib({i}) = {}", fibonacci_iter_ffi(i));
 }`,
-    },
-    {
-        name: 'Fibonacci (Matrix)',
-        source: `\
+  },
+  {
+    name: "Fibonacci (Matrix)",
+    source: `\
 struct Matrix<T : Num> {
     m00: T,
     m01: T,
@@ -86,14 +92,14 @@ fn fibonacci<T : Integral>(n : T) -> T {
 }
 
 extern "C" trampoline "fibonacci_ffi" = fibonacci<u64>;`,
-        driver: `\
+    driver: `\
 for i in 0u64..10 {
     println!("fib({i}) = {}", fibonacci_ffi(i));
 }`,
-    },
-    {
-        name: 'Tree Count Leaves',
-        source: `\
+  },
+  {
+    name: "Tree Count Leaves",
+    source: `\
 enum Tree {
     Leaf(i32),
     Node(Tree, Tree)
@@ -117,17 +123,17 @@ fn make_node(l : Tree, r : Tree) -> Tree {
 extern "C" trampoline "make_leaf" = make_leaf;
 extern "C" trampoline "make_node" = make_node;
 extern "C" trampoline "count_leaves" = count_leaves;`,
-        driver: `\
+    driver: `\
 // Build: Node(Leaf(1), Node(Leaf(2), Leaf(3)))
 let tree = make_node(
     make_leaf(1),
     make_node(make_leaf(2), make_leaf(3)),
 );
 println!("count_leaves = {}", count_leaves(tree));`,
-    },
-    {
-        name: 'List Sum',
-        source: `\
+  },
+  {
+    name: "List Sum",
+    source: `\
 enum List<T> {
     Nil,
     Cons(T, List<T>)
@@ -151,9 +157,9 @@ fn cons(x : i32, xs : List<i32>) -> List<i32> {
 extern "C" trampoline "nil" = nil;
 extern "C" trampoline "cons" = cons;
 extern "C" trampoline "sum" = sum;`,
-        driver: `\
+    driver: `\
 // Build: [1, 2, 3, 4, 5]
 let list = cons(1, cons(2, cons(3, cons(4, cons(5, nil())))));
 println!("sum([1,2,3,4,5]) = {}", sum(list));`,
-    },
+  },
 ];
