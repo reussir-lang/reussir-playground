@@ -112,7 +112,6 @@ export function Toolbar() {
 
   const handleModeSelect = (value: Mode) => {
     setMode(value);
-    compile();
   };
 
   return (
