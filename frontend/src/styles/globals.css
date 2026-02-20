@@ -2,22 +2,23 @@
 
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f3f3f3;
-  --bg-elevated: #f5f5f5;
+  --bg-secondary: #f6f8fa;
+  --bg-elevated: #ebedf0;
   --bg-input: #ffffff;
-  --bg-input-hover: #e8e8e8;
-  --border: #e0e0e0;
-  --border-subtle: #eaeaea;
-  --border-input: #cecece;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --text-heading: #1e1e1e;
-  --accent: #0e639c;
-  --accent-hover: #1177bb;
-  --error: #d32f2f;
-  --divider: #e0e0e0;
-  --divider-hover: #b0b0b0;
-  --divider-active: #909090;
+  --bg-input-hover: #f0f1f3;
+  --border: #d0d7de;
+  --border-subtle: #d8dee4;
+  --border-input: #b8bfc6;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --text-heading: #1b1f24;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --error: #cf222e;
+  --divider: #d0d7de;
+  --divider-hover: #8c959f;
+  --divider-active: #6e7781;
+  --grip: #959da5;
 }
 
 html.dark {
@@ -38,6 +39,7 @@ html.dark {
   --divider: #3a3a3a;
   --divider-hover: #5e5e5e;
   --divider-active: #7a7a7a;
+  --grip: #666;
 }
 
 @theme {
@@ -58,6 +60,7 @@ html.dark {
   --color-divider: var(--divider);
   --color-divider-hover: var(--divider-hover);
   --color-divider-active: var(--divider-active);
+  --color-grip: var(--grip);
   --font-mono: "Fira Code", "Cascadia Code", "Consolas", "Monaco", monospace;
 }
 
