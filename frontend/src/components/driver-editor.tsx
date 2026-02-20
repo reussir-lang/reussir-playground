@@ -1,8 +1,8 @@
 import { useRef, useCallback } from "react";
 import Editor, { type Monaco, type OnMount } from "@monaco-editor/react";
-import { useAtom } from "jotai";
-import { driverCodeAtom } from "@/store/atoms";
-import { reussirDarkTheme } from "@/lang/reussir-theme";
+import { useAtom, useAtomValue } from "jotai";
+import { driverCodeAtom, themeAtom } from "@/store/atoms";
+import { reussirDarkTheme, reussirLightTheme } from "@/lang/reussir-theme";
 import type { editor } from "monaco-editor";
 
 let themeRegistered = false;
@@ -11,10 +11,12 @@ function ensureTheme(monaco: Monaco) {
   if (themeRegistered) return;
   themeRegistered = true;
   monaco.editor.defineTheme("reussir-dark", reussirDarkTheme);
+  monaco.editor.defineTheme("reussir-light", reussirLightTheme);
 }
 
 export function DriverEditor() {
   const [driverCode, setDriverCode] = useAtom(driverCodeAtom);
+  const theme = useAtomValue(themeAtom);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const handleBeforeMount = useCallback((monaco: Monaco) => {
@@ -37,7 +39,7 @@ export function DriverEditor() {
   return (
     <Editor
       language="rust"
-      theme="reussir-dark"
+      theme={theme === "dark" ? "reussir-dark" : "reussir-light"}
       value={driverCode}
       beforeMount={handleBeforeMount}
       onMount={handleMount}

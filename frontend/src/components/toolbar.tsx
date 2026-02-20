@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useCompile } from "@/hooks/use-compile";
+import { useTheme } from "@/hooks/use-theme";
+import { Sun, Moon } from "lucide-react";
 
 export function Toolbar() {
   const [selectedExample, setSelectedExample] = useAtom(
@@ -34,6 +36,7 @@ export function Toolbar() {
   const buttonText = useAtomValue(runButtonTextAtom);
   const setOutput = useSetAtom(outputAtom);
   const compile = useCompile();
+  const { theme, toggleTheme } = useTheme();
 
   const handleExampleChange = (value: string) => {
     const index = parseInt(value, 10);
@@ -149,6 +152,14 @@ export function Toolbar() {
       >
         {buttonText}
       </Button>
+
+      <button
+        onClick={toggleTheme}
+        className="ml-auto h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
     </div>
   );
 }
