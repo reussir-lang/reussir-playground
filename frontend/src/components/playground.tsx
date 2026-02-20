@@ -6,10 +6,12 @@ import { OutputPanel } from "@/components/output-panel";
 import { Toolbar } from "@/components/toolbar";
 import { useCompile } from "@/hooks/use-compile";
 import { useKeyboardShortcut } from "@/hooks/use-keyboard-shortcut";
+import { useSharedState } from "@/hooks/use-shared-state";
 
 export function Playground() {
   const compile = useCompile();
   useKeyboardShortcut("Enter", "ctrlOrMeta", compile);
+  useSharedState();
 
   return (
     <>

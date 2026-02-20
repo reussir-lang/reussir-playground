@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { BookOpen, ChevronDown, LucideGithub, Moon, Sun } from "lucide-react";
+import { BookOpen, Check, ChevronDown, LucideGithub, Moon, Share2, Sun } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 
 import { examples } from "@/data/examples";
 import { useCompile } from "@/hooks/use-compile";
 import { useTheme } from "@/hooks/use-theme";
+import { buildShareUrl } from "@/lib/share";
 import {
   driverCodeAtom,
   isCompilingAtom,
@@ -80,6 +82,23 @@ export function Toolbar() {
   const setOutput = useSetAtom(outputAtom);
   const compile = useCompile();
   const { theme, toggleTheme } = useTheme();
+  const [copied, setCopied] = useState(false);
+
+  const sourceCode = useAtomValue(sourceCodeAtom);
+  const driverCode = useAtomValue(driverCodeAtom);
+
+  const handleShare = async () => {
+    const url = buildShareUrl({
+      source: sourceCode,
+      driver: driverCode,
+      mode,
+      opt: optLevel,
+    });
+    window.history.replaceState(null, "", url);
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleExampleSelect = (index: number) => {
     const example = examples[index];
@@ -237,11 +256,20 @@ export function Toolbar() {
         </DropdownMenu.Root>
       </div>
 
+      <button
+        type="button"
+        onClick={handleShare}
+        className="ml-auto h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+        title="Copy source code"
+      >
+        {copied ? <Check size={16} className="text-green-600" /> : <Share2 size={16} />}
+      </button>
+
       <a
         href="https://reussir-lang.github.io/"
         target="_blank"
         rel="noopener noreferrer"
-        className="ml-auto h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+        className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
         title="Documentation"
       >
         <BookOpen size={16} />
