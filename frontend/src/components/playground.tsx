@@ -1,5 +1,5 @@
 import { GripHorizontal, GripVertical } from "lucide-react";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Group, Panel, Separator } from "react-resizable-panels";
 
 import { EditorPane } from "@/components/editor-pane";
 import { OutputPanel } from "@/components/output-panel";
@@ -19,15 +19,15 @@ export function Playground() {
     <>
       <Toolbar />
       <div className="flex-1 min-h-0">
-        <PanelGroup
-          direction={isMobile ? "vertical" : "horizontal"}
+        <Group
+          orientation={isMobile ? "vertical" : "horizontal"}
           key={isMobile ? "vertical" : "horizontal"}
         >
-          <Panel defaultSize={isMobile ? 55 : 55} minSize={15}>
+          <Panel defaultSize="55%" minSize="15%">
             <EditorPane />
           </Panel>
 
-          <PanelResizeHandle
+          <Separator
             className={
               isMobile
                 ? "h-2.5 bg-bg-secondary border-y border-border-subtle hover:bg-divider-hover active:bg-divider-active relative touch-none flex items-center justify-center transition-colors"
@@ -39,12 +39,12 @@ export function Playground() {
             ) : (
               <GripVertical size={14} className="text-grip" />
             )}
-          </PanelResizeHandle>
+          </Separator>
 
-          <Panel defaultSize={isMobile ? 45 : 45} minSize={15}>
+          <Panel defaultSize="45%" minSize="15%">
             <OutputPanel />
           </Panel>
-        </PanelGroup>
+        </Group>
       </div>
     </>
   );

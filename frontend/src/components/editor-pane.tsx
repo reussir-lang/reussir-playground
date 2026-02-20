@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 import { Download, GripHorizontal } from "lucide-react";
 import { useCallback } from "react";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Group, Panel, Separator } from "react-resizable-panels";
 
 import { DriverEditor } from "@/components/driver-editor";
 import { SourceEditor } from "@/components/source-editor";
@@ -25,8 +25,8 @@ export function EditorPane() {
   }, [sourceCode]);
 
   return (
-    <PanelGroup direction="vertical">
-      <Panel defaultSize={60} minSize={10}>
+    <Group orientation="vertical">
+      <Panel defaultSize="60%" minSize="10%">
         <div className="flex flex-col h-full min-h-0">
           <div className="px-3 py-1.5 bg-bg-elevated text-[11px] font-semibold text-text-secondary uppercase tracking-wider border-b border-border shrink-0 flex items-center">
             <span>Reussir Source</span>
@@ -45,11 +45,11 @@ export function EditorPane() {
         </div>
       </Panel>
 
-      <PanelResizeHandle className="h-2.5 bg-bg-secondary border-y border-border-subtle hover:bg-divider-hover active:bg-divider-active relative touch-none flex items-center justify-center transition-colors">
+      <Separator className="h-2.5 bg-bg-secondary border-y border-border-subtle hover:bg-divider-hover active:bg-divider-active relative touch-none flex items-center justify-center transition-colors">
         <GripHorizontal size={14} className="text-grip" />
-      </PanelResizeHandle>
+      </Separator>
 
-      <Panel defaultSize={40} minSize={10}>
+      <Panel defaultSize="40%" minSize="10%">
         <div className="flex flex-col h-full min-h-0">
           <div className="px-3 py-1.5 bg-bg-elevated text-[11px] font-semibold text-text-secondary uppercase tracking-wider border-b border-border shrink-0">
             Rust Driver
@@ -59,6 +59,6 @@ export function EditorPane() {
           </div>
         </div>
       </Panel>
-    </PanelGroup>
+    </Group>
   );
 }
