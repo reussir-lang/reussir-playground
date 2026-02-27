@@ -10,7 +10,7 @@ import {
 } from "@/lang/output-languages";
 import { reussirDarkTheme, reussirLightTheme } from "@/lang/reussir-theme";
 import { cn } from "@/lib/utils";
-import { modeAtom, outputAtom, outputLabelAtom, themeAtom } from "@/store/atoms";
+import { outputAtom, outputLabelAtom, outputModeAtom, themeAtom } from "@/store/atoms";
 
 const MODE_LANGUAGE: Record<string, string> = {
   "llvm-ir": "llvm-ir",
@@ -47,7 +47,7 @@ function registerOutputLanguages(monaco: Monaco) {
 export function OutputPanel() {
   const output = useAtomValue(outputAtom);
   const label = useAtomValue(outputLabelAtom);
-  const mode = useAtomValue(modeAtom);
+  const mode = useAtomValue(outputModeAtom);
   const theme = useAtomValue(themeAtom);
 
   const handleBeforeMount = useCallback((monaco: Monaco) => {
