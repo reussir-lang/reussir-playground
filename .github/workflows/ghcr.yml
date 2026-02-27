@@ -40,6 +40,10 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
 
+      - name: Get latest reussir commit SHA
+        id: reussir-ref
+        run: echo "sha=$(git ls-remote https://github.com/reussir-lang/reussir.git refs/heads/main | cut -f1)" >> "$GITHUB_OUTPUT"
+
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v6
@@ -47,6 +51,8 @@ jobs:
           context: .
           file: Dockerfile
           platforms: ${{ matrix.platform }}
+          build-args: |
+            CACHEBUST=${{ steps.reussir-ref.outputs.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,"name=ghcr.io/${{ github.repository }}",push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.platform }}
