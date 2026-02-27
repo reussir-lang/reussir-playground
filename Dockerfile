@@ -63,6 +63,9 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org \
 
 RUN bash -lc "source /root/.ghcup/env && cabal update"
 
+# Bust Docker layer cache for git clone when the upstream ref changes.
+# Pass --build-arg CACHEBUST=$(date +%s) (or a commit SHA) to force a fresh clone.
+ARG CACHEBUST
 RUN git clone --depth 1 --branch "${REUSSIR_REF}" https://github.com/reussir-lang/reussir.git /opt/reussir
 WORKDIR /opt/reussir
 
