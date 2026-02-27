@@ -7,6 +7,7 @@ import {
   optLevelAtom,
   isCompilingAtom,
   outputAtom,
+  outputModeAtom,
 } from "@/store/atoms";
 import { compileCode, b64ToBytes } from "@/api/compile";
 import { runWasm } from "@/runtime/wasi";
@@ -18,8 +19,10 @@ export function useCompile() {
   const opt = useAtomValue(optLevelAtom);
   const setIsCompiling = useSetAtom(isCompilingAtom);
   const setOutput = useSetAtom(outputAtom);
+  const setOutputMode = useSetAtom(outputModeAtom);
 
   return useCallback(async () => {
+    setOutputMode(mode);
     setOutput({
       kind: "loading",
       text: mode === "run" ? "Compiling to wasm\u2026" : "Compiling\u2026",
@@ -84,5 +87,5 @@ export function useCompile() {
     } finally {
       setIsCompiling(false);
     }
-  }, [source, driver, mode, opt, setIsCompiling, setOutput]);
+  }, [source, driver, mode, opt, setIsCompiling, setOutput, setOutputMode]);
 }

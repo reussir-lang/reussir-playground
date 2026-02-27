@@ -34,6 +34,9 @@ export const outputAtom = atom<OutputState>({
   text: 'Select an example and click "Run" to compile.',
 });
 
+// Tracks which mode produced the current output (for syntax highlighting)
+export const outputModeAtom = atom<Mode>("run");
+
 // --- Derived: output panel label ---
 const MODE_LABELS: Record<string, string> = {
   run: "Output",
@@ -43,7 +46,7 @@ const MODE_LABELS: Record<string, string> = {
 };
 
 export const outputLabelAtom = atom(
-  (get) => MODE_LABELS[get(modeAtom)] ?? "Output",
+  (get) => MODE_LABELS[get(outputModeAtom)] ?? "Output",
 );
 
 // --- Derived: button text ---
