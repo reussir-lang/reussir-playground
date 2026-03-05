@@ -137,6 +137,131 @@ let tree = make_node(
 println!("count_leaves = {}", count_leaves(tree));`,
   },
   {
+    name: "Closures",
+    description: "First-class closures: captures, partial application, and higher-order functions",
+    source: `\
+fn apply_i32(f : i32 -> i32, x : i32) -> i32 {
+    f(x)
+}
+
+fn apply_bool(f : bool -> i32, x : bool) -> i32 {
+    f(x)
+}
+
+// basic closure call
+pub fn test_basic_call() -> i32 {
+    let add_one = |x : i32| x + 1;
+    apply_i32(add_one, 41)
+}
+extern "C" trampoline "test_basic_call_ffi" = test_basic_call;
+
+// closure with capture
+pub fn test_capture() -> i32 {
+    let offset = 10;
+    let add_offset = |x : i32| x + offset;
+    apply_i32(add_offset, 32)
+}
+extern "C" trampoline "test_capture_ffi" = test_capture;
+
+// partial application
+pub fn test_partial() -> i32 {
+    let choose = |a : i32, b : bool| if (b) { a } else { 0 };
+    let choose_100 = choose(100);
+    apply_bool(choose_100, true)
+}
+extern "C" trampoline "test_partial_ffi" = test_partial;
+
+// closure returning closure (higher-order)
+fn make_adder(n : i32) -> i32 -> i32 {
+    |x : i32| x + n
+}
+
+pub fn test_higher_order() -> i32 {
+    let add5 = make_adder(5);
+    apply_i32(add5, 37)
+}
+extern "C" trampoline "test_higher_order_ffi" = test_higher_order;
+
+// nested closure calls
+pub fn test_nested() -> i32 {
+    let double = |x : i32| x * 2;
+    let inc    = |x : i32| x + 1;
+    apply_i32(inc, apply_i32(double, 20))
+}
+extern "C" trampoline "test_nested_ffi" = test_nested;`,
+    driver: `\
+println!("basic call:    {}", test_basic_call_ffi());
+println!("capture:       {}", test_capture_ffi());
+println!("partial app:   {}", test_partial_ffi());
+println!("higher-order:  {}", test_higher_order_ffi());
+println!("nested:        {}", test_nested_ffi());`,
+  },
+  {
+    name: "Closure Multiplicity",
+    description: "Closures reused multiple times and shared captures with reference counting",
+    source: `\
+struct Box {
+    x : i32
+}
+
+fn apply1(f : i32 -> i32, x : i32) -> i32 {
+    f(x)
+}
+
+fn get_x(b : Box) -> i32 {
+    b.x
+}
+
+// same closure called multiple times
+pub fn test_closure_reuse() -> i32 {
+    let add_one = |x : i32| x + 1;
+    let a = apply1(add_one, 10);
+    let b = apply1(add_one, 20);
+    let c = apply1(add_one, 30);
+    a + b + c
+}
+extern "C" trampoline "test_closure_reuse_ffi" = test_closure_reuse;
+
+// captured RC value used both inside and outside closure
+pub fn test_capture_and_use() -> i32 {
+    let val = Box { x: 7 };
+    let use_val = |x : i32| x + val.x;
+    let inside = apply1(use_val, 10);
+    let outside = val.x * 5;
+    inside + outside
+}
+extern "C" trampoline "test_capture_and_use_ffi" = test_capture_and_use;
+
+// multiple closures capture the same RC variable
+pub fn test_shared_capture() -> i32 {
+    let shared = Box { x: 100 };
+    let add_shared = |x : i32| x + shared.x;
+    let sub_shared = |x : i32| x - shared.x;
+    let a = apply1(add_shared, 10);
+    let b = apply1(sub_shared, 210);
+    a + b
+}
+extern "C" trampoline "test_shared_capture_ffi" = test_shared_capture;
+
+// partial application result used multiple times
+fn make_adder(n : i32) -> i32 -> i32 {
+    |x : i32| x + n
+}
+
+pub fn test_partial_reuse() -> i32 {
+    let add5 = make_adder(5);
+    let a = apply1(add5, 10);
+    let b = apply1(add5, 20);
+    a + b
+}
+extern "C" trampoline "test_partial_reuse_ffi" = test_partial_reuse;`,
+    driver: `\
+println!("closure reuse:    {}", test_closure_reuse_ffi());
+println!("capture and use:  {}", test_capture_and_use_ffi());
+println!("shared capture:   {}", test_shared_capture_ffi());
+println!("partial reuse:    {}", test_partial_reuse_ffi());`,
+  },
+  {
     name: "List Sum",
     description: "Recursive sum over a generic linked list",
     source: `\

@@ -4,3 +4,4 @@
 config.toml
 /frontend/node_modules/
 /frontend/dist/
+/vendor/

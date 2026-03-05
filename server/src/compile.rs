@@ -229,7 +229,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-reussir-rt = {{ path = "{rt}" }}
+reussir-rt = {{ path = "{rt}", default-features = false }}
 
 [profile.release]
 opt-level = "z"
