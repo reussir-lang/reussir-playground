@@ -381,7 +381,7 @@ fn norm_form(env: Env, t: Term) -> Term {
     quote(names_of_env(env, Names::NameNil), eval(env, t))
 }
 
-// Church numeral 5: λf. λx. f (f (f (f (f x))))
+// Church numeral 5: \\f. \\x. f (f (f (f (f x))))
 fn five() -> Term {
     Term::Lam{
         0,
@@ -404,7 +404,7 @@ fn five() -> Term {
     }
 }
 
-// Church addition: λm. λn. λf. λx. m f (n f x)
+// Church addition: \\m. \\n. \\f. \\x. m f (n f x)
 fn add() -> Term {
     Term::Lam{
         0,
@@ -424,7 +424,7 @@ fn add() -> Term {
     }
 }
 
-// Church multiplication: λm. λn. λf. λx. m (n f) x
+// Church multiplication: \\m. \\n. \\f. \\x. m (n f) x
 fn mul() -> Term {
     Term::Lam{
         0,
