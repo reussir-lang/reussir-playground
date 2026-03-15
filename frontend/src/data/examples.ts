@@ -293,4 +293,234 @@ extern "C" trampoline "sum" = sum;`,
 let list = cons(1, cons(2, cons(3, cons(4, cons(5, nil())))));
 println!("sum([1,2,3,4,5]) = {}", sum(list));`,
   },
+  {
+    name: "NBE-HOAS",
+    description:
+      "Normalization by Evaluation with Higher-Order Abstract Syntax — normalizes Church numerals using closures as binders",
+    source: `\
+enum Term {
+    Var(i32),
+    Lam(i32, Term),
+    App(Term, Term),
+    Let(i32, Term, Term)
+}
+
+enum Value {
+    VVar(i32),
+    VApp(Value, Value),
+    VLam(i32, Value -> Value)
+}
+
+enum Env {
+    EnvCons(i32, Value, Env),
+    EnvNil
+}
+
+enum Names {
+    NameCons(i32, Names),
+    NameNil
+}
+
+fn max_of_names(n: Names, acc: i32) -> i32 {
+    match n {
+        Names::NameCons(id, n1) => {
+            let next = if acc > id { acc } else { id };
+            max_of_names(n1, next)
+        },
+        Names::NameNil => acc
+    }
+}
+
+fn names_of_env(env: Env, acc: Names) -> Names {
+    match env {
+        Env::EnvCons(id, _, env1) => names_of_env(env1, Names::NameCons{id, acc}),
+        Env::EnvNil => acc
+    }
+}
+
+fn fresh(n: Names) -> i32 {
+    max_of_names(n, 0) + 1
+}
+
+fn lookup(env: Env, id: i32) -> Value {
+    match env {
+        Env::EnvCons(id1, v, env1) =>
+            if id == id1 { v } else { lookup(env1, id) },
+        Env::EnvNil => Value::VVar{id}
+    }
+}
+
+fn eval(env: Env, x: Term) -> Value {
+    match x {
+        Term::Var(id) => lookup(env, id),
+        Term::App(t, u) => vapp(eval(env, t), eval(env, u)),
+        Term::Lam(x, t) => Value::VLam{x, |u: Value| eval(Env::EnvCons{x, u, env}, t)},
+        Term::Let(x, t, u) => eval(Env::EnvCons{x, eval(env, t), env}, u)
+    }
+}
+
+fn vapp(v1: Value, v2: Value) -> Value {
+    match v1 {
+        Value::VLam(_, body) => body(v2),
+        _ => Value::VApp{v1, v2}
+    }
+}
+
+fn quote(n: Names, v: Value) -> Term {
+    match v {
+        Value::VVar(i) => Term::Var{i},
+        Value::VApp(v1, v2) => Term::App{quote(n, v1), quote(n, v2)},
+        Value::VLam(_, f) => {
+            let y = fresh(n);
+            Term::Lam{y, quote(Names::NameCons{y, n}, f(Value::VVar{y}))}
+        }
+    }
+}
+
+fn norm_form(env: Env, t: Term) -> Term {
+    quote(names_of_env(env, Names::NameNil), eval(env, t))
+}
+
+// Church numeral 5: λf. λx. f (f (f (f (f x))))
+fn five() -> Term {
+    Term::Lam{
+        0,
+        Term::Lam{
+            1,
+            Term::App{
+                Term::Var{0},
+                Term::App{
+                    Term::Var{0},
+                    Term::App{
+                        Term::Var{0},
+                        Term::App{
+                            Term::Var{0},
+                            Term::App{Term::Var{0}, Term::Var{1}}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Church addition: λm. λn. λf. λx. m f (n f x)
+fn add() -> Term {
+    Term::Lam{
+        0,
+        Term::Lam{
+            1,
+            Term::Lam{
+                2,
+                Term::Lam{
+                    3,
+                    Term::App{
+                        Term::App{Term::Var{0}, Term::Var{2}},
+                        Term::App{Term::App{Term::Var{1}, Term::Var{2}}, Term::Var{3}}
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Church multiplication: λm. λn. λf. λx. m (n f) x
+fn mul() -> Term {
+    Term::Lam{
+        0,
+        Term::Lam{
+            1,
+            Term::Lam{
+                2,
+                Term::Lam{
+                    3,
+                    Term::App{
+                        Term::App{Term::Var{0}, Term::App{Term::Var{1}, Term::Var{2}}},
+                        Term::Var{3}
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn ten() -> Term {
+    let x = five();
+    let y = add();
+    Term::App{Term::App{y, x}, x}
+}
+
+fn hundred() -> Term {
+    let x = ten();
+    let y = mul();
+    Term::App{Term::App{y, x}, x}
+}
+
+fn thousand() -> Term {
+    let x = hundred();
+    let z = ten();
+    let y = mul();
+    Term::App{Term::App{y, x}, z}
+}
+
+// Count applications in the normal form to recover the integer
+fn nf_to_int(t: Term, acc: i32) -> i32 {
+    match t {
+        Term::Lam(_, x) => nf_to_int(x, acc),
+        Term::App(_, x) => nf_to_int(x, acc + 1),
+        _ => acc
+    }
+}
+
+fn nbe_test() -> i32 {
+    let t = thousand();
+    let n = norm_form(Env::EnvNil, t);
+    nf_to_int(n, 0)
+}
+
+extern "C" trampoline "nbe_test_ffi" = nbe_test;`,
+    driver: `\
+let result = nbe_test_ffi();
+println!("NBE of Church 1000 = {result}");`,
+  },
+  {
+    name: "Region",
+    description:
+      "Region-based memory management with regional structs, flex/rigid cells, and region scopes",
+    source: `\
+struct [regional] Cell<T> {
+    value: T
+}
+
+struct [regional] Container<T> {
+    cell: [field] Cell<T>
+}
+
+fn trivial() -> u64 {
+    regional {
+        1
+    }
+}
+
+fn freeze_cell() -> Cell<u64> {
+    regional {
+        Cell{value: 1}
+    }
+}
+
+fn freeze_cell_with_let_expr() -> Cell<u64> {
+    regional {
+        let x : [flex] Cell<u64> = regional_function(42);
+        x
+    }
+}
+
+regional fn regional_function(x : u64) -> [flex] Cell<u64> {
+    Cell{value: x}
+}
+
+extern "C" trampoline "trivial" = trivial;`,
+    driver: `\
+println!("trivial = {}", trivial());`,
+  },
 ];
