@@ -6,6 +6,7 @@ export interface CompileRequest {
   driver: string;
   mode: Mode;
   opt: OptLevel;
+  reuse_across_call: boolean;
 }
 
 export const CompileResponseSchema = z.object({

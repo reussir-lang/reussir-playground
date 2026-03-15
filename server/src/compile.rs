@@ -35,6 +35,9 @@ pub struct CompileRequest {
     /// Optimization level: "none" | "default" | "size" | "aggressive"
     #[serde(default = "default_opt")]
     opt: String,
+    /// Pass --reuse-across-call to the compiler.
+    #[serde(default)]
+    reuse_across_call: bool,
 }
 
 fn default_opt() -> String { "none".to_string() }
@@ -125,6 +128,9 @@ async fn compile_text(cfg: &Config, req: &CompileRequest, opt: &str) -> Result<C
         args.push(OsStr::new("--target-triple"));
         args.push(OsStr::new("wasm32-wasip1"));
     }
+    if req.reuse_across_call {
+        args.push(OsStr::new("--reuse-across-call"));
+    }
 
     let extra_ro = compiler_ro_paths(cfg);
     let extra_ro_refs: Vec<&Path> = extra_ro.iter().map(AsRef::as_ref).collect();
@@ -165,7 +171,7 @@ async fn compile_run(cfg: &Config, req: &CompileRequest, opt: &str) -> Result<Co
     // Step 1: compile Reussir source → wasm32-wasip1 object (sandboxed)
     // -----------------------------------------------------------------------
     let compiler = &cfg.compiler.path;
-    let args = [
+    let mut args: Vec<&OsStr> = vec![
         input_path.as_os_str(),
         OsStr::new("-o"),
         object_path.as_os_str(),
@@ -176,6 +182,9 @@ async fn compile_run(cfg: &Config, req: &CompileRequest, opt: &str) -> Result<Co
         OsStr::new("--target-triple"),
         OsStr::new("wasm32-wasip1"),
     ];
+    if req.reuse_across_call {
+        args.push(OsStr::new("--reuse-across-call"));
+    }
 
     let extra_ro = compiler_ro_paths(cfg);
     let extra_ro_refs: Vec<&Path> = extra_ro.iter().map(AsRef::as_ref).collect();

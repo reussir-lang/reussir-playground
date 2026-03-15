@@ -1,5 +1,5 @@
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { BookOpen, ChevronDown, LucideGithub, Moon, Share2, Sun } from "lucide-react";
+import { BookOpen, ChevronDown, FileCode, Gauge, LucideGithub, Moon, Settings, Share2, Sun } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { toast } from "sonner";
 
@@ -13,6 +13,7 @@ import {
   modeAtom,
   optLevelAtom,
   outputAtom,
+  reuseAcrossCallAtom,
   runButtonTextAtom,
   selectedExampleIndexAtom,
   sourceCodeAtom,
@@ -77,6 +78,7 @@ export function Toolbar() {
   const setDriverCode = useSetAtom(driverCodeAtom);
   const [mode, setMode] = useAtom(modeAtom);
   const [optLevel, setOptLevel] = useAtom(optLevelAtom);
+  const [reuseAcrossCall, setReuseAcrossCall] = useAtom(reuseAcrossCallAtom);
   const isCompiling = useAtomValue(isCompilingAtom);
   const buttonText = useAtomValue(runButtonTextAtom);
   const setOutput = useSetAtom(outputAtom);
@@ -92,6 +94,7 @@ export function Toolbar() {
       driver: driverCode,
       mode,
       opt: optLevel,
+      reuseAcrossCall: reuseAcrossCall || undefined,
     });
     window.history.replaceState(null, "", url);
     await navigator.clipboard.writeText(url);
@@ -182,6 +185,7 @@ export function Toolbar() {
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button type="button" className={TRIGGER_CLASS}>
+              <FileCode size={14} />
               {examples[selectedExample]?.name ?? "Example"}
               <ChevronDown size={14} className="opacity-50" />
             </button>
@@ -218,6 +222,7 @@ export function Toolbar() {
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button type="button" className={TRIGGER_CLASS}>
+              <Gauge size={14} />
               {OPT_OPTIONS.find((o) => o.value === optLevel)?.label ??
                 "Optimization"}
               <ChevronDown size={14} className="opacity-50" />
@@ -248,6 +253,43 @@ export function Toolbar() {
                   </span>
                 </DropdownMenu.Item>
               ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button type="button" className={TRIGGER_CLASS}>
+              <Settings size={14} />
+              Options
+              <ChevronDown size={14} className="opacity-50" />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              className={MENU_CONTENT_CLASS}
+              sideOffset={4}
+              align="start"
+            >
+              <DropdownMenu.CheckboxItem
+                checked={reuseAcrossCall}
+                onCheckedChange={(v) => setReuseAcrossCall(!!v)}
+                onSelect={(e) => e.preventDefault()}
+                className={MENU_ITEM_CLASS}
+              >
+                <span className="font-medium text-text-primary flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center justify-center h-4 w-4 rounded border text-[10px] ${reuseAcrossCall ? "bg-accent border-accent text-white" : "border-border-input bg-bg-input"}`}
+                  >
+                    {reuseAcrossCall && "✓"}
+                  </span>
+                  Reuse across call
+                </span>
+                <span className="text-[11px] text-text-secondary pl-6">
+                  Allow the compiler to reuse memory across function calls for
+                  regional allocations
+                </span>
+              </DropdownMenu.CheckboxItem>
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>

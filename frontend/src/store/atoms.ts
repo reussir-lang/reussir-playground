@@ -19,6 +19,8 @@ export const modeAtom = atom<Mode>("run");
 export type OptLevel = "none" | "default" | "size" | "aggressive";
 export const optLevelAtom = atom<OptLevel>("none");
 
+export const reuseAcrossCallAtom = atom(false);
+
 // --- Compile state ---
 export const isCompilingAtom = atom(false);
 

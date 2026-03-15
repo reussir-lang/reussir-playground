@@ -5,6 +5,7 @@ import {
   driverCodeAtom,
   modeAtom,
   optLevelAtom,
+  reuseAcrossCallAtom,
   isCompilingAtom,
   outputAtom,
   outputModeAtom,
@@ -17,6 +18,7 @@ export function useCompile() {
   const driver = useAtomValue(driverCodeAtom);
   const mode = useAtomValue(modeAtom);
   const opt = useAtomValue(optLevelAtom);
+  const reuseAcrossCall = useAtomValue(reuseAcrossCallAtom);
   const setIsCompiling = useSetAtom(isCompilingAtom);
   const setOutput = useSetAtom(outputAtom);
   const setOutputMode = useSetAtom(outputModeAtom);
@@ -30,7 +32,7 @@ export function useCompile() {
     setIsCompiling(true);
 
     try {
-      const data = await compileCode({ source, driver, mode, opt });
+      const data = await compileCode({ source, driver, mode, opt, reuse_across_call: reuseAcrossCall });
 
       if (!data.success) {
         setOutput({
@@ -87,5 +89,5 @@ export function useCompile() {
     } finally {
       setIsCompiling(false);
     }
-  }, [source, driver, mode, opt, setIsCompiling, setOutput, setOutputMode]);
+  }, [source, driver, mode, opt, reuseAcrossCall, setIsCompiling, setOutput, setOutputMode]);
 }

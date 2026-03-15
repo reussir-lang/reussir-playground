@@ -5,6 +5,7 @@ export interface SharedState {
   driver: string;
   mode: Mode;
   opt: OptLevel;
+  reuseAcrossCall?: boolean;
 }
 
 /** Encode playground state into a URL-safe hash string. */

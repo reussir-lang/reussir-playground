@@ -6,6 +6,7 @@ import {
   driverCodeAtom,
   modeAtom,
   optLevelAtom,
+  reuseAcrossCallAtom,
   sourceCodeAtom,
 } from "@/store/atoms";
 
@@ -15,6 +16,7 @@ export function useSharedState() {
   const setDriverCode = useSetAtom(driverCodeAtom);
   const setMode = useSetAtom(modeAtom);
   const setOptLevel = useSetAtom(optLevelAtom);
+  const setReuseAcrossCall = useSetAtom(reuseAcrossCallAtom);
 
   useEffect(() => {
     const hash = window.location.hash.slice(1);
@@ -25,5 +27,6 @@ export function useSharedState() {
     setDriverCode(state.driver);
     setMode(state.mode);
     setOptLevel(state.opt);
-  }, [setSourceCode, setDriverCode, setMode, setOptLevel]);
+    if (state.reuseAcrossCall) setReuseAcrossCall(true);
+  }, [setSourceCode, setDriverCode, setMode, setOptLevel, setReuseAcrossCall]);
 }
