@@ -25,17 +25,17 @@ pub struct Config {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct CompilerConfig {
-    /// Absolute path to the `rrc` compiler binary from a Reussir nightly.
+    /// Path to the `rrc` compiler binary from a Reussir nightly.
     pub rrc_path: PathBuf,
 
-    /// Absolute path to the `rene` package manager from the same nightly.
+    /// Path to the `rene` package manager from the same nightly.
     pub rene_path: PathBuf,
 
     /// `llvm-strip` used to remove non-runtime sections before returning WASM.
     pub llvm_strip_path: PathBuf,
 
-    /// Optional absolute Rust toolchain overrides. When absent, the server
-    /// resolves `rustc` and `cargo` from PATH before invoking Rene.
+    /// Optional Rust toolchain overrides. When absent, the server resolves
+    /// `rustc` and `cargo` from PATH before invoking Rene.
     pub rustc_path: Option<PathBuf>,
     pub cargo_path: Option<PathBuf>,
 
@@ -135,19 +135,30 @@ mod defaults {
 
 impl Config {
     pub fn load(path: &Path) -> Result<Self> {
-        let text = std::fs::read_to_string(path)
+        let config_path = std::fs::canonicalize(path)
+            .with_context(|| format!("cannot resolve config file: {}", path.display()))?;
+        let config_dir = config_path
+            .parent()
+            .context("config file has no parent directory")?;
+        let text = std::fs::read_to_string(&config_path)
             .with_context(|| format!("cannot read config file: {}", path.display()))?;
         let mut cfg: Config = toml::from_str(&text)
             .with_context(|| format!("failed to parse config file: {}", path.display()))?;
-        let cwd = std::env::current_dir().context("cannot resolve current directory")?;
-        if cfg.compiler.build_dir.is_relative() {
-            cfg.compiler.build_dir = cwd.join(&cfg.compiler.build_dir);
-        }
+
+        resolve_relative(config_dir, &mut cfg.compiler.rrc_path);
+        resolve_relative(config_dir, &mut cfg.compiler.rene_path);
+        resolve_relative(config_dir, &mut cfg.compiler.llvm_strip_path);
+        resolve_optional_relative(config_dir, &mut cfg.compiler.rustc_path);
+        resolve_optional_relative(config_dir, &mut cfg.compiler.cargo_path);
+        resolve_relative(config_dir, &mut cfg.compiler.build_dir);
         if let Some(cargo_home) = &mut cfg.compiler.cargo_home {
-            if cargo_home.is_relative() {
-                *cargo_home = cwd.join(&*cargo_home);
-            }
+            resolve_relative(config_dir, cargo_home);
         }
+        for path in &mut cfg.compiler.toolchain_ro_paths {
+            resolve_relative(config_dir, path);
+        }
+        resolve_optional_relative(config_dir, &mut cfg.sandbox.bwrap_path);
+
         cfg.validate()?;
         Ok(cfg)
     }
@@ -181,5 +192,17 @@ impl Config {
             )
         })?;
         Ok(())
+    }
+}
+
+fn resolve_relative(base: &Path, path: &mut PathBuf) {
+    if path.is_relative() {
+        *path = base.join(&*path);
+    }
+}
+
+fn resolve_optional_relative(base: &Path, path: &mut Option<PathBuf>) {
+    if let Some(path) = path {
+        resolve_relative(base, path);
     }
 }

@@ -6,15 +6,16 @@ bind_addr = "127.0.0.1:3000"
 [compiler]
 # Nightly toolchain binaries from:
 # https://github.com/reussir-lang/reussir/releases/tag/nightly
-rrc_path = "/path/to/reussir-nightly/bin/rrc"
-rene_path = "/path/to/reussir-nightly/bin/rene"
+# Relative paths are resolved from the directory containing this file.
+rrc_path = "../reussir-nightly/bin/rrc"
+rene_path = "../reussir-nightly/bin/rene"
 
 # LLVM's WebAssembly-aware strip tool.
-llvm_strip_path = "/path/to/llvm-strip"
+llvm_strip_path = "../llvm/bin/llvm-strip"
 
-# Optional absolute overrides; otherwise resolved from PATH.
-# rustc_path = "/path/to/rustc"
-# cargo_path = "/path/to/cargo"
+# Optional overrides; otherwise resolved from PATH.
+# rustc_path = "../rust-toolchain/bin/rustc"
+# cargo_path = "../rust-toolchain/bin/cargo"
 
 # Rene caches its baked wasm32-wasip1 runtime and build records here.
 build_dir = "playground-build"
@@ -35,4 +36,4 @@ build_timeout_secs = 300
 kind = "none"
 
 # Optional: explicit path to bubblewrap.
-# bwrap_path = "/usr/bin/bwrap"
+# bwrap_path = "../bin/bwrap"
