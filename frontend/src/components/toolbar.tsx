@@ -8,7 +8,6 @@ import { useCompile } from "@/hooks/use-compile";
 import { useTheme } from "@/hooks/use-theme";
 import { buildShareUrl } from "@/lib/share";
 import {
-  driverCodeAtom,
   isCompilingAtom,
   modeAtom,
   optLevelAtom,
@@ -75,7 +74,6 @@ export function Toolbar() {
     selectedExampleIndexAtom,
   );
   const setSourceCode = useSetAtom(sourceCodeAtom);
-  const setDriverCode = useSetAtom(driverCodeAtom);
   const [mode, setMode] = useAtom(modeAtom);
   const [optLevel, setOptLevel] = useAtom(optLevelAtom);
   const [reuseAcrossCall, setReuseAcrossCall] = useAtom(reuseAcrossCallAtom);
@@ -86,12 +84,10 @@ export function Toolbar() {
   const { theme, toggleTheme } = useTheme();
 
   const sourceCode = useAtomValue(sourceCodeAtom);
-  const driverCode = useAtomValue(driverCodeAtom);
 
   const handleShare = async () => {
     const url = buildShareUrl({
       source: sourceCode,
-      driver: driverCode,
       mode,
       opt: optLevel,
       reuseAcrossCall: reuseAcrossCall || undefined,
@@ -106,7 +102,6 @@ export function Toolbar() {
     if (!example) return;
     setSelectedExample(index);
     setSourceCode(example.source);
-    setDriverCode(example.driver);
     setOutput({
       kind: "idle",
       text: "Select a mode and click Run to compile.",

@@ -1,12 +1,16 @@
 bind_addr = "0.0.0.0:3000"
 
 [compiler]
-path = "/opt/reussir/build/bin/reussir-compiler"
-rt_path = "/opt/reussir/runtime"
-lib_path = "/opt/reussir/build/lib"
-cargo_target_dir = "/var/lib/reussir-playground/playground-target"
+rrc_path = "/opt/reussir/bin/rrc"
+rene_path = "/opt/reussir/bin/rene"
+llvm_strip_path = "/usr/bin/llvm-strip"
+rustc_path = "/opt/cargo/bin/rustc"
+cargo_path = "/opt/cargo/bin/cargo"
+build_dir = "/var/lib/reussir-playground/rene"
+cargo_home = "/var/lib/reussir-playground/rene/cargo-home"
+toolchain_ro_paths = ["/opt/rustup", "/opt/cargo"]
 compile_timeout_secs = 30
-cargo_timeout_secs = 180
+build_timeout_secs = 300
 
 [sandbox]
 kind = "landlock"

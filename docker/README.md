@@ -1,44 +1,14 @@
-# Dockerized Reussir Playground (Landlock)
+# Docker image
 
-This setup builds:
-- `reussir-playground` (webserver)
-- `reussir-compiler` from `reussir-lang/reussir` (using the upstream Ubuntu CI stack)
-
-It configures the server with `sandbox.kind = "landlock"` via `docker/config.landlock.toml`.
-
-## 1. Build the image
+The root `Dockerfile` downloads the matching Linux artifact from the public
+Reussir `nightly` release, then builds only the playground server and frontend.
+It supports `linux/amd64` and `linux/arm64`.
 
 ```bash
-docker build -t reussir-playground:landlock .
+docker build -t reussir-playground .
+docker run --rm -p 3000:3000 reussir-playground
 ```
 
-Optional build args:
-
-```bash
-docker build \
-  --build-arg REUSSIR_REF=main \
-  --build-arg LLVM_VERSION=22 \
-  --build-arg RUST_NIGHTLY=nightly-2025-12-01 \
-  -t reussir-playground:landlock .
-```
-
-## 2. Run with the Landlock-aware seccomp profile
-
-Landlock syscalls are blocked by many default container seccomp policies.
-Use the provided `docker/seccomp-landlock.json` profile when running.
-
-```bash
-docker run --rm \
-  -p 3000:3000 \
-  --security-opt no-new-privileges:true \
-  --security-opt seccomp=$(pwd)/docker/seccomp-landlock.json \
-  reussir-playground:landlock
-```
-
-Then open `http://127.0.0.1:3000`.
-
-## Notes
-
-- Host kernel must support Landlock (`>= 5.13`).
-- The compiler/runtime cache is stored at `/var/lib/reussir-playground/playground-target` inside the container.
-- The default runtime config path is `/etc/reussir-playground/config.toml`.
+The runtime image uses Landlock, keeps Rene/Cargo caches under
+`/var/lib/reussir-playground`, and strips each generated WASM module before it
+is returned to the browser.

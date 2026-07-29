@@ -25,31 +25,49 @@ pub struct Config {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct CompilerConfig {
-    /// Absolute path to the reussir compiler binary.
-    pub path: PathBuf,
+    /// Absolute path to the `rrc` compiler binary from a Reussir nightly.
+    pub rrc_path: PathBuf,
 
-    /// Optional directory containing the compiler's shared libraries
-    /// (e.g. `build/lib/`).  Added as a read-only path in the sandbox so the
-    /// compiler process can load `libMLIRReussirBridge.so` etc.
-    pub lib_path: Option<PathBuf>,
+    /// Absolute path to the `rene` package manager from the same nightly.
+    pub rene_path: PathBuf,
 
-    /// Path to the `reussir-rt` Cargo project directory.
-    /// Used as the `reussir-rt` dependency when building the wasm32-wasip1 harness.
-    /// The crate compiles for wasm just fine — the `dylib` crate-type is silently
-    /// downgraded to `rlib` by cargo on that target.
-    pub rt_path: PathBuf,
+    /// `llvm-strip` used to remove non-runtime sections before returning WASM.
+    pub llvm_strip_path: PathBuf,
 
-    /// Shared Cargo target directory for caching harness builds across requests.
-    #[serde(default = "defaults::cargo_target_dir")]
-    pub cargo_target_dir: PathBuf,
+    /// Optional absolute Rust toolchain overrides. When absent, the server
+    /// resolves `rustc` and `cargo` from PATH before invoking Rene.
+    pub rustc_path: Option<PathBuf>,
+    pub cargo_path: Option<PathBuf>,
 
-    /// Timeout for a single reussir compiler invocation.
+    /// Shared Rene build directory. Runtime baking and compiler artifacts are
+    /// cached here across requests.
+    #[serde(default = "defaults::build_dir")]
+    pub build_dir: PathBuf,
+
+    /// Writable Cargo home used while Rene bakes its embedded runtime.
+    /// Defaults to `<build_dir>/cargo-home`.
+    pub cargo_home: Option<PathBuf>,
+
+    /// Toolchain roots that sandboxed Rene/rrc processes need to read.
+    /// Docker uses this for the rustup and Cargo installations under `/opt`.
+    #[serde(default)]
+    pub toolchain_ro_paths: Vec<PathBuf>,
+
+    /// Timeout for a single rrc invocation.
     #[serde(default = "defaults::compile_timeout_secs")]
     pub compile_timeout_secs: u64,
 
-    /// Timeout for `cargo build --target wasm32-wasip1` of the harness.
-    #[serde(default = "defaults::cargo_timeout_secs")]
-    pub cargo_timeout_secs: u64,
+    /// Timeout for a Rene build, including a first-use runtime bake.
+    #[serde(default = "defaults::build_timeout_secs")]
+    pub build_timeout_secs: u64,
+}
+
+impl CompilerConfig {
+    pub fn cargo_home(&self) -> PathBuf {
+        self.cargo_home
+            .clone()
+            .unwrap_or_else(|| self.build_dir.join("cargo-home"))
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -98,16 +116,16 @@ mod defaults {
         "127.0.0.1:3000".parse().unwrap()
     }
 
-    pub fn cargo_target_dir() -> PathBuf {
-        PathBuf::from("playground-target")
+    pub fn build_dir() -> PathBuf {
+        PathBuf::from("playground-build")
     }
 
     pub fn compile_timeout_secs() -> u64 {
         30
     }
 
-    pub fn cargo_timeout_secs() -> u64 {
-        180
+    pub fn build_timeout_secs() -> u64 {
+        300
     }
 }
 
@@ -119,23 +137,49 @@ impl Config {
     pub fn load(path: &Path) -> Result<Self> {
         let text = std::fs::read_to_string(path)
             .with_context(|| format!("cannot read config file: {}", path.display()))?;
-        let cfg: Config = toml::from_str(&text)
+        let mut cfg: Config = toml::from_str(&text)
             .with_context(|| format!("failed to parse config file: {}", path.display()))?;
+        let cwd = std::env::current_dir().context("cannot resolve current directory")?;
+        if cfg.compiler.build_dir.is_relative() {
+            cfg.compiler.build_dir = cwd.join(&cfg.compiler.build_dir);
+        }
+        if let Some(cargo_home) = &mut cfg.compiler.cargo_home {
+            if cargo_home.is_relative() {
+                *cargo_home = cwd.join(&*cargo_home);
+            }
+        }
         cfg.validate()?;
         Ok(cfg)
     }
 
     fn validate(&self) -> Result<()> {
-        anyhow::ensure!(
-            self.compiler.path.exists(),
-            "compiler.path does not exist: {}",
-            self.compiler.path.display()
-        );
-        anyhow::ensure!(
-            self.compiler.rt_path.exists(),
-            "compiler.rt_path does not exist: {}",
-            self.compiler.rt_path.display()
-        );
+        for (name, path) in [
+            ("compiler.rrc_path", &self.compiler.rrc_path),
+            ("compiler.rene_path", &self.compiler.rene_path),
+            ("compiler.llvm_strip_path", &self.compiler.llvm_strip_path),
+        ] {
+            anyhow::ensure!(path.is_file(), "{name} does not exist: {}", path.display());
+        }
+        std::fs::create_dir_all(&self.compiler.build_dir).with_context(|| {
+            format!(
+                "cannot create compiler.build_dir: {}",
+                self.compiler.build_dir.display()
+            )
+        })?;
+        let cargo_home = self.compiler.cargo_home();
+        std::fs::create_dir_all(&cargo_home).with_context(|| {
+            format!(
+                "cannot create compiler.cargo_home: {}",
+                cargo_home.display()
+            )
+        })?;
+        let temp_dir = self.compiler.build_dir.join("tmp");
+        std::fs::create_dir_all(&temp_dir).with_context(|| {
+            format!(
+                "cannot create compiler temporary directory: {}",
+                temp_dir.display()
+            )
+        })?;
         Ok(())
     }
 }

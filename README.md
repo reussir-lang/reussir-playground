@@ -1,131 +1,100 @@
 # Reussir Playground
 
-Web-based playground for the [Reussir](https://github.com/reussir-lang/reussir)
+Web playground for the [Reussir](https://github.com/reussir-lang/reussir)
 programming language.
 
-**How it works:**
-- The server compiles Reussir source to a `wasm32-wasip1` object, links it with
-  `reussir-rt` via a generated Rust harness, and returns the `.wasm` binary.
-- The browser executes the binary through a built-in WASI shim
-  — **the server never runs user code**.
-- Text output modes (LLVM IR, Assembly, MLIR) invoke the compiler inside a
-  sandbox and return the textual output directly.
+## How it works
+
+- The editor contains one complete Reussir package: program logic, the
+  `#[main]` entry point, and any `#[ffi(import)]` PolyFFI definitions.
+- Run mode asks the nightly `rene` package manager to build an executable for
+  `wasm32-wasip1`.
+- The server runs `llvm-strip` on the resulting module, returns it as base64,
+  and the browser executes it through the bundled WASI shim.
+- LLVM IR, WebAssembly assembly, and MLIR views use the matching nightly `rrc`
+  compiler after Rene prepares the target runtime and PolyFFI library paths.
+- User programs are never executed by the server.
+
+The Docker image downloads the self-contained `rrc` and `rene` binaries from
+the [Reussir nightly release](https://github.com/reussir-lang/reussir/releases/tag/nightly);
+it does not build the compiler from source.
 
 ## Requirements
 
 | Tool | Notes |
 |---|---|
-| Rust toolchain | stable + `wasm32-wasip1` target (`rustup target add wasm32-wasip1`) |
-| Node.js + pnpm | frontend build toolchain |
-| reussir-compiler | built from [reussir-lang/reussir](https://github.com/reussir-lang/reussir) |
-| bwrap *(or)* Linux 5.13+ | sandboxing; bwrap is the default |
+| Reussir nightly | `rrc` and `rene` from the nightly release |
+| Rust toolchain | Nightly toolchain plus `wasm32-wasip1` |
+| LLVM | `llvm-strip` must be available |
+| Node.js + pnpm | Frontend build toolchain |
 
 ## Setup
 
 ```bash
-# 1. Clone
 git clone https://github.com/reussir-lang/reussir-playground
 cd reussir-playground
 
-# 2. Add the wasm32-wasip1 target (only needed once)
 rustup target add wasm32-wasip1
 
-# 3. Write your config
 cp config.example.toml config.toml
-$EDITOR config.toml       # set compiler.path and compiler.rt_path
+$EDITOR config.toml
 
-# 4. Build the frontend
-cd frontend && pnpm install && pnpm build && cd ..
+cd frontend
+pnpm install
+pnpm build
+cd ..
 
-# 5. Build and run the server
 cargo run -p reussir-playground --release
 ```
 
-Then open `http://127.0.0.1:3000` in a browser.
+Open <http://127.0.0.1:3000>.
 
-## Development
-
-For local development, run the Vite dev server and the Rust backend separately.
-Vite proxies `/api` requests to the backend automatically.
-
-```bash
-# Terminal 1: start the Rust server
-cargo run -p reussir-playground --release
-
-# Terminal 2: start the frontend dev server (hot reload)
-cd frontend && pnpm dev
-```
-
-Then open `http://localhost:5173`.
+For frontend development, run `pnpm dev` in `frontend/`; Vite proxies
+`/api` to the Rust server on port 3000.
 
 ## Configuration
 
-All configuration lives in `config.toml` (see `config.example.toml`).
+All configuration lives in `config.toml`.
 
 | Key | Default | Description |
 |---|---|---|
 | `bind_addr` | `127.0.0.1:3000` | Listen address |
-| `compiler.path` | *(required)* | Path to reussir-compiler binary |
-| `compiler.rt_path` | *(required)* | Path to `reussir/runtime/` directory |
-| `compiler.cargo_target_dir` | `playground-target` | Shared Cargo target dir for harness caching |
-| `compiler.compile_timeout_secs` | `30` | Compiler timeout |
-| `compiler.cargo_timeout_secs` | `180` | Cargo build timeout |
-| `sandbox.kind` | `bwrap` | `bwrap` / `landlock` / `none` |
-| `sandbox.bwrap_path` | `bwrap` in PATH | Path to bwrap binary |
+| `compiler.rrc_path` | required | Nightly `rrc` binary |
+| `compiler.rene_path` | required | Nightly `rene` binary |
+| `compiler.llvm_strip_path` | required | `llvm-strip` binary |
+| `compiler.rustc_path` / `cargo_path` | from `PATH` | Optional absolute Rust toolchain overrides |
+| `compiler.build_dir` | `playground-build` | Shared Rene runtime/build cache |
+| `compiler.cargo_home` | `<build_dir>/cargo-home` | Writable Cargo cache |
+| `compiler.toolchain_ro_paths` | `[]` | Extra toolchain roots exposed read-only in the sandbox |
+| `compiler.compile_timeout_secs` | `30` | `rrc`/`llvm-strip` timeout |
+| `compiler.build_timeout_secs` | `300` | Rene build timeout, including first runtime bake |
+| `sandbox.kind` | `bwrap` | `bwrap`, `landlock`, or `none` |
 
-The bind address can also be overridden on the CLI:
+The bind address can also be overridden:
 
 ```bash
 reussir-playground --bind 0.0.0.0:8080
-reussir-playground --config /etc/reussir-playground/config.toml
 ```
+
+## API
+
+`POST /api/compile` accepts:
+
+```json
+{
+  "source": "#[main]\npub fn entry() {}",
+  "mode": "run",
+  "opt": "size",
+  "reuse_across_call": false
+}
+```
+
+Text modes return `{ "success": true, "output": "..." }`. Run mode returns
+`{ "success": true, "wasm": "<base64>" }`.
 
 ## Sandboxing
 
-Compiler invocations are sandboxed to prevent the untrusted reussir source
-(which controls MLIR/LLVM IR passed to the backend) from exfiltrating data or
-modifying the host.
-
-- **bwrap** (default): unshares user, IPC, and network namespaces; presents a
-  minimal read-only rootfs; the per-request temp dir gets read-write access.
-- **landlock**: applies Linux Landlock rules via `pre_exec` in the child process.
-  Requires kernel ≥ 5.13; gracefully degrades on older kernels.
-- **none**: no sandboxing — only use locally.
-
-> Note: sandboxing applies to the **compiler** process only.  The compiled
-> `.wasm` binary is executed by the browser's own WebAssembly sandbox, so the
-> server never runs user code at all.
-
-## Output modes
-
-| Mode | Description |
-|---|---|
-| **Run** | Compile to `wasm32-wasip1`, ship binary to browser, execute via built-in WASI shim |
-| **LLVM IR** | Return the LLVM IR emitted for the target |
-| **Assembly** | Return the native assembly |
-| **MLIR** | Return the MLIR module before LLVM lowering |
-
-## Architecture
-
-```
-Browser (React/Monaco)          Server (Rust/Axum)
-──────────────────────          ────────────────────────────────────
- Source editor (Monaco)
- Driver editor (Rust)   ─POST──► /api/compile
-                                  │
-                                  ├─ text modes:
-                                  │   sandbox.wrap(reussir-compiler …)
-                                  │   return { output: "…" }
-                                  │
-                                  └─ run mode:
-                                      sandbox.wrap(reussir-compiler
-                                        --target-triple wasm32-wasip1 …)
-                                      cargo build --target wasm32-wasip1
-                                      read .wasm
-                                      return { wasm: "<base64>" }
-
- WASI shim ◄────────────────────────────────────────────────────────
- WebAssembly.instantiate()
- _start()  →  capture stdout/stderr
- display output
-```
+Compiler/package-manager processes run through the configured filesystem
+sandbox. The shared Rene build directory is writable so it can cache the
+embedded runtime and Cargo artifacts; toolchain roots are read-only. The
+compiled WebAssembly runs only in the browser's WebAssembly sandbox.
