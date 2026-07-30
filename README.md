@@ -52,6 +52,16 @@ Open <http://127.0.0.1:3000>.
 For frontend development, run `pnpm dev` in `frontend/`; Vite proxies
 `/api` to the Rust server on port 3000.
 
+## Deployment
+
+Deploy the latest published images to the production host:
+
+```bash
+ssh root@reussir-playground.zhuyi.fan -p 5261
+cd reussir-playground/
+docker compose pull && docker compose up -d
+```
+
 ## Configuration
 
 All configuration lives in `config.toml`.
