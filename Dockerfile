@@ -70,7 +70,7 @@ RUN cargo build --release --locked -p reussir-playground \
 
 FROM node:22-slim AS frontend-builder
 WORKDIR /workspace/frontend
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 RUN corepack enable && pnpm install --frozen-lockfile
 COPY frontend/ .
 RUN pnpm run build
