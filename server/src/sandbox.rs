@@ -195,6 +195,15 @@ fn apply_landlock(work_dir: &Path, extra_ro: &[std::path::PathBuf]) -> anyhow::R
         }
     }
 
+    // Child-process launchers such as Cargo use /dev/null for stdio. Keep the
+    // rest of /dev inaccessible and grant only the file permissions needed to
+    // open this device for input or output.
+    let dev_null = Path::new("/dev/null");
+    if dev_null.exists() {
+        let device_access = AccessFs::ReadFile | AccessFs::WriteFile;
+        ruleset = ruleset.add_rule(PathBeneath::new(PathFd::new(dev_null)?, device_access))?;
+    }
+
     // Caller-supplied extra read-only paths.
     for p in extra_ro {
         if p.exists() {
