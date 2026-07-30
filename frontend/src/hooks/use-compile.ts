@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
   sourceCodeAtom,
-  driverCodeAtom,
   modeAtom,
   optLevelAtom,
   reuseAcrossCallAtom,
@@ -15,7 +14,6 @@ import { runWasm } from "@/runtime/wasi";
 
 export function useCompile() {
   const source = useAtomValue(sourceCodeAtom);
-  const driver = useAtomValue(driverCodeAtom);
   const mode = useAtomValue(modeAtom);
   const opt = useAtomValue(optLevelAtom);
   const reuseAcrossCall = useAtomValue(reuseAcrossCallAtom);
@@ -32,7 +30,7 @@ export function useCompile() {
     setIsCompiling(true);
 
     try {
-      const data = await compileCode({ source, driver, mode, opt, reuse_across_call: reuseAcrossCall });
+      const data = await compileCode({ source, mode, opt, reuse_across_call: reuseAcrossCall });
 
       if (!data.success) {
         setOutput({
@@ -89,5 +87,5 @@ export function useCompile() {
     } finally {
       setIsCompiling(false);
     }
-  }, [source, driver, mode, opt, reuseAcrossCall, setIsCompiling, setOutput, setOutputMode]);
+  }, [source, mode, opt, reuseAcrossCall, setIsCompiling, setOutput, setOutputMode]);
 }

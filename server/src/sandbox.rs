@@ -8,7 +8,7 @@
 //!    needing a setuid helper.
 //!
 //! Both backends accept the same calling convention: a path to the program, its
-//! arguments, the working directory that needs read-write access, and any extra
+//! arguments, the build directory that needs read-write access, and any extra
 //! paths that need read-only access (e.g., the directory that holds the
 //! compiler binary on exotic layouts).
 
@@ -20,9 +20,9 @@ use tokio::process::Command;
 
 /// Return a `Command` that runs `program args` inside the configured sandbox.
 ///
-/// * `work_dir`       — the per-request temp directory; gets full read-write
-///                      access so the compiler can read the source and write
-///                      the output.
+/// * `work_dir`       — the shared compiler build directory; gets full
+///                      read-write access for request sources, caches, and
+///                      outputs.
 /// * `extra_ro_paths` — additional paths that need read-only access (e.g., the
 ///                      parent directory of the compiler binary).
 pub fn wrap<I, S>(
@@ -99,7 +99,7 @@ where
     // proc, dev, and a fresh /tmp inside the sandbox.
     cmd.args(["--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp"]);
 
-    // The per-request work directory — read-write so the compiler can write output.
+    // The compiler build directory — read-write for request data and caches.
     let work_str = work_dir
         .to_str()
         .context("work_dir path contains non-UTF-8 bytes")?;
@@ -129,8 +129,8 @@ where
 fn landlock_wrap<I, S>(
     program: &Path,
     args: I,
-    work_dir: &Path,
-    extra_ro_paths: &[&Path],
+    _work_dir: &Path,
+    _extra_ro_paths: &[&Path],
 ) -> Result<Command>
 where
     I: IntoIterator<Item = S>,
@@ -146,8 +146,8 @@ where
 
     #[cfg(target_os = "linux")]
     {
-        let work_dir = work_dir.to_owned();
-        let extra: Vec<std::path::PathBuf> = extra_ro_paths
+        let work_dir = _work_dir.to_owned();
+        let extra: Vec<std::path::PathBuf> = _extra_ro_paths
             .iter()
             .filter(|p| p.exists())
             .map(|p| p.to_path_buf())
@@ -173,13 +173,9 @@ where
 }
 
 #[cfg(target_os = "linux")]
-fn apply_landlock(
-    work_dir: &Path,
-    extra_ro: &[std::path::PathBuf],
-) -> anyhow::Result<()> {
+fn apply_landlock(work_dir: &Path, extra_ro: &[std::path::PathBuf]) -> anyhow::Result<()> {
     use landlock::{
-        ABI, Access, AccessFs, PathBeneath, PathFd, Ruleset, RulesetAttr,
-        RulesetCreatedAttr,
+        Access, AccessFs, PathBeneath, PathFd, Ruleset, RulesetAttr, RulesetCreatedAttr, ABI,
     };
 
     // Use the highest ABI the running kernel supports.
@@ -187,9 +183,7 @@ fn apply_landlock(
     let read_only = AccessFs::from_read(abi);
     let read_write = AccessFs::from_all(abi);
 
-    let mut ruleset = Ruleset::default()
-        .handle_access(read_write)?
-        .create()?;
+    let mut ruleset = Ruleset::default().handle_access(read_write)?.create()?;
 
     // Standard system paths: read-only.
     for dir in [

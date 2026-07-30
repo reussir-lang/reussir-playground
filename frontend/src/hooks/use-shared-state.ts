@@ -3,7 +3,6 @@ import { useEffect } from "react";
 
 import { decodeState } from "@/lib/share";
 import {
-  driverCodeAtom,
   modeAtom,
   optLevelAtom,
   reuseAcrossCallAtom,
@@ -13,7 +12,6 @@ import {
 /** On mount, check the URL hash for shared playground state and apply it. */
 export function useSharedState() {
   const setSourceCode = useSetAtom(sourceCodeAtom);
-  const setDriverCode = useSetAtom(driverCodeAtom);
   const setMode = useSetAtom(modeAtom);
   const setOptLevel = useSetAtom(optLevelAtom);
   const setReuseAcrossCall = useSetAtom(reuseAcrossCallAtom);
@@ -24,9 +22,8 @@ export function useSharedState() {
     const state = decodeState(hash);
     if (!state) return;
     setSourceCode(state.source);
-    setDriverCode(state.driver);
     setMode(state.mode);
     setOptLevel(state.opt);
     if (state.reuseAcrossCall) setReuseAcrossCall(true);
-  }, [setSourceCode, setDriverCode, setMode, setOptLevel, setReuseAcrossCall]);
+  }, [setSourceCode, setMode, setOptLevel, setReuseAcrossCall]);
 }

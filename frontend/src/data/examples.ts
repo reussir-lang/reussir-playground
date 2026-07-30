@@ -2,7 +2,6 @@ export interface Example {
   name: string;
   description: string;
   source: string;
-  driver: string;
 }
 
 export const examples: readonly Example[] = [
@@ -18,10 +17,21 @@ pub fn fibonacci(n: u64) -> u64 {
     }
 }
 
-extern "C" trampoline "fibonacci_ffi" = fibonacci;`,
-    driver: `\
-for i in 0u64..10 {
-    println!("fib({i}) = {}", fibonacci_ffi(i));
+#[ffi(import)]
+fn print_fibonacci(n: u64, value: u64) [{
+    println!("fib({n}) = {value}");
+}];
+
+fn print_fibonacci_range(n: u64) {
+    if n < 10 {
+        print_fibonacci(n, fibonacci(n));
+        print_fibonacci_range(n + 1)
+    } else {}
+}
+
+#[main]
+pub fn entry() {
+    print_fibonacci_range(0)
 }`,
   },
   {
@@ -40,10 +50,21 @@ pub fn fibonacci_iter(n: u64) -> u64 {
     fibonacci_iter_impl(n, 0, 1)
 }
 
-extern "C" trampoline "fibonacci_iter_ffi" = fibonacci_iter;`,
-    driver: `\
-for i in 0u64..20 {
-    println!("fib({i}) = {}", fibonacci_iter_ffi(i));
+#[ffi(import)]
+fn print_fibonacci(n: u64, value: u64) [{
+    println!("fib({n}) = {value}");
+}];
+
+fn print_fibonacci_range(n: u64) {
+    if n < 20 {
+        print_fibonacci(n, fibonacci_iter(n));
+        print_fibonacci_range(n + 1)
+    } else {}
+}
+
+#[main]
+pub fn entry() {
+    print_fibonacci_range(0)
 }`,
   },
   {
@@ -95,10 +116,21 @@ fn fibonacci<T : Integral>(n : T) -> T {
     fibonacci_logarithmic_impl(n, eye, x)
 }
 
-extern "C" trampoline "fibonacci_ffi" = fibonacci<u64>;`,
-    driver: `\
-for i in 0u64..10 {
-    println!("fib({i}) = {}", fibonacci_ffi(i));
+#[ffi(import)]
+fn print_fibonacci(n: u64, value: u64) [{
+    println!("fib({n}) = {value}");
+}];
+
+fn print_fibonacci_range(n: u64) {
+    if n < 10 {
+        print_fibonacci(n, fibonacci<u64>(n));
+        print_fibonacci_range(n + 1)
+    } else {}
+}
+
+#[main]
+pub fn entry() {
+    print_fibonacci_range(0)
 }`,
   },
   {
@@ -125,16 +157,20 @@ fn make_node(l : Tree, r : Tree) -> Tree {
     Tree::Node{l, r}
 }
 
-extern "C" trampoline "make_leaf" = make_leaf;
-extern "C" trampoline "make_node" = make_node;
-extern "C" trampoline "count_leaves" = count_leaves;`,
-    driver: `\
-// Build: Node(Leaf(1), Node(Leaf(2), Leaf(3)))
-let tree = make_node(
-    make_leaf(1),
-    make_node(make_leaf(2), make_leaf(3)),
-);
-println!("count_leaves = {}", count_leaves(tree));`,
+#[ffi(import)]
+fn print_count(value: i32) [{
+    println!("count_leaves = {value}");
+}];
+
+#[main]
+pub fn entry() {
+    // Build: Node(Leaf(1), Node(Leaf(2), Leaf(3)))
+    let tree = make_node(
+        make_leaf(1),
+        make_node(make_leaf(2), make_leaf(3))
+    );
+    print_count(count_leaves(tree))
+}`,
   },
   {
     name: "Closures",
@@ -153,7 +189,6 @@ pub fn test_basic_call() -> i32 {
     let add_one = |x : i32| x + 1;
     apply_i32(add_one, 41)
 }
-extern "C" trampoline "test_basic_call_ffi" = test_basic_call;
 
 // closure with capture
 pub fn test_capture() -> i32 {
@@ -161,7 +196,6 @@ pub fn test_capture() -> i32 {
     let add_offset = |x : i32| x + offset;
     apply_i32(add_offset, 32)
 }
-extern "C" trampoline "test_capture_ffi" = test_capture;
 
 // partial application
 pub fn test_partial() -> i32 {
@@ -169,7 +203,6 @@ pub fn test_partial() -> i32 {
     let choose_100 = choose(100);
     apply_bool(choose_100, true)
 }
-extern "C" trampoline "test_partial_ffi" = test_partial;
 
 // closure returning closure (higher-order)
 fn make_adder(n : i32) -> i32 -> i32 {
@@ -180,7 +213,6 @@ pub fn test_higher_order() -> i32 {
     let add5 = make_adder(5);
     apply_i32(add5, 37)
 }
-extern "C" trampoline "test_higher_order_ffi" = test_higher_order;
 
 // nested closure calls
 pub fn test_nested() -> i32 {
@@ -188,13 +220,20 @@ pub fn test_nested() -> i32 {
     let inc    = |x : i32| x + 1;
     apply_i32(inc, apply_i32(double, 20))
 }
-extern "C" trampoline "test_nested_ffi" = test_nested;`,
-    driver: `\
-println!("basic call:    {}", test_basic_call_ffi());
-println!("capture:       {}", test_capture_ffi());
-println!("partial app:   {}", test_partial_ffi());
-println!("higher-order:  {}", test_higher_order_ffi());
-println!("nested:        {}", test_nested_ffi());`,
+
+#[ffi(import)]
+fn print_case(label: i32, value: i32) [{
+    println!("case {label}: {value}");
+}];
+
+#[main]
+pub fn entry() {
+    print_case(1, test_basic_call());
+    print_case(2, test_capture());
+    print_case(3, test_partial());
+    print_case(4, test_higher_order());
+    print_case(5, test_nested())
+}`,
   },
   {
     name: "Closure Multiplicity",
@@ -220,7 +259,6 @@ pub fn test_closure_reuse() -> i32 {
     let c = apply1(add_one, 30);
     a + b + c
 }
-extern "C" trampoline "test_closure_reuse_ffi" = test_closure_reuse;
 
 // captured RC value used both inside and outside closure
 pub fn test_capture_and_use() -> i32 {
@@ -230,7 +268,6 @@ pub fn test_capture_and_use() -> i32 {
     let outside = val.x * 5;
     inside + outside
 }
-extern "C" trampoline "test_capture_and_use_ffi" = test_capture_and_use;
 
 // multiple closures capture the same RC variable
 pub fn test_shared_capture() -> i32 {
@@ -241,7 +278,6 @@ pub fn test_shared_capture() -> i32 {
     let b = apply1(sub_shared, 210);
     a + b
 }
-extern "C" trampoline "test_shared_capture_ffi" = test_shared_capture;
 
 // partial application result used multiple times
 fn make_adder(n : i32) -> i32 -> i32 {
@@ -254,12 +290,19 @@ pub fn test_partial_reuse() -> i32 {
     let b = apply1(add5, 20);
     a + b
 }
-extern "C" trampoline "test_partial_reuse_ffi" = test_partial_reuse;`,
-    driver: `\
-println!("closure reuse:    {}", test_closure_reuse_ffi());
-println!("capture and use:  {}", test_capture_and_use_ffi());
-println!("shared capture:   {}", test_shared_capture_ffi());
-println!("partial reuse:    {}", test_partial_reuse_ffi());`,
+
+#[ffi(import)]
+fn print_case(label: i32, value: i32) [{
+    println!("case {label}: {value}");
+}];
+
+#[main]
+pub fn entry() {
+    print_case(1, test_closure_reuse());
+    print_case(2, test_capture_and_use());
+    print_case(3, test_shared_capture());
+    print_case(4, test_partial_reuse())
+}`,
   },
   {
     name: "List Sum",
@@ -285,13 +328,16 @@ fn cons(x : i32, xs : List<i32>) -> List<i32> {
     List::Cons{x, xs}
 }
 
-extern "C" trampoline "nil" = nil;
-extern "C" trampoline "cons" = cons;
-extern "C" trampoline "sum" = sum;`,
-    driver: `\
-// Build: [1, 2, 3, 4, 5]
-let list = cons(1, cons(2, cons(3, cons(4, cons(5, nil())))));
-println!("sum([1,2,3,4,5]) = {}", sum(list));`,
+#[ffi(import)]
+fn print_sum(value: i32) [{
+    println!("sum([1,2,3,4,5]) = {value}");
+}];
+
+#[main]
+pub fn entry() {
+    let list = cons(1, cons(2, cons(3, cons(4, cons(5, nil())))));
+    print_sum(sum(list))
+}`,
   },
   {
     name: "NBE-HOAS",
@@ -478,10 +524,15 @@ fn nbe_test() -> i32 {
     nf_to_int(n, 0)
 }
 
-extern "C" trampoline "nbe_test_ffi" = nbe_test;`,
-    driver: `\
-let result = nbe_test_ffi();
-println!("NBE of Church 1000 = {result}");`,
+#[ffi(import)]
+fn print_result(value: i32) [{
+    println!("NBE of Church 1000 = {value}");
+}];
+
+#[main]
+pub fn entry() {
+    print_result(nbe_test())
+}`,
   },
   {
     name: "Region",
@@ -519,8 +570,14 @@ regional fn regional_function(x : u64) -> [flex] Cell<u64> {
     Cell{value: x}
 }
 
-extern "C" trampoline "trivial" = trivial;`,
-    driver: `\
-println!("trivial = {}", trivial());`,
+#[ffi(import)]
+fn print_result(value: u64) [{
+    println!("trivial = {value}");
+}];
+
+#[main]
+pub fn entry() {
+    print_result(trivial())
+}`,
   },
 ];

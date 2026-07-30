@@ -17,6 +17,7 @@ export const reussirLanguage: languages.IMonarchLanguage = {
     "as",
     "regional",
     "extern",
+    "rust",
     "trampoline",
     "for",
     "in",
@@ -77,6 +78,12 @@ export const reussirLanguage: languages.IMonarchLanguage = {
 
   tokenizer: {
     root: [
+      // Item attributes used by the current entry-point and PolyFFI syntax.
+      [
+        /#\[\s*(?:main|ffi)(?:\s*\([^)\]]*\))?\s*\]/,
+        "annotation",
+      ],
+
       // Capability annotations: [shared], [value], etc.
       [
         /\[\s*(shared|value|flex|rigid|field|regional)\s*\]/,

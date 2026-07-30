@@ -16,6 +16,9 @@
             "include": "#capabilities"
         },
         {
+            "include": "#attributes"
+        },
+        {
             "include": "#keywords"
         },
         {
@@ -91,11 +94,19 @@
                 }
             ]
         },
+        "attributes": {
+            "patterns": [
+                {
+                    "name": "meta.attribute.reussir",
+                    "match": "#\\[\\s*(main|ffi)(?:\\s*\\([^\\)\\]]*\\))?\\s*\\]"
+                }
+            ]
+        },
         "keywords": {
             "patterns": [
                 {
                     "name": "keyword.declaration.reussir",
-                    "match": "\\b(fn|struct|enum|pub)\\b"
+                    "match": "\\b(fn|struct|enum|pub|extern|rust)\\b"
                 },
                 {
                     "name": "keyword.control.reussir",

@@ -1,48 +1,39 @@
 # Reussir Playground — example configuration
 # Copy to config.toml and adjust for your environment.
 
-# Address to listen on.  Can be overridden with --bind on the CLI.
 bind_addr = "127.0.0.1:3000"
 
 [compiler]
-# Absolute path to the compiled reussir-compiler binary.
-path = "/path/to/reussir-compiler"
+# Nightly toolchain binaries from:
+# https://github.com/reussir-lang/reussir/releases/tag/nightly
+# Relative paths are resolved from the directory containing this file.
+rrc_path = "../reussir-nightly/bin/rrc"
+rene_path = "../reussir-nightly/bin/rene"
 
-# Path to the reussir-rt Cargo project directory (runtime/Cargo.toml lives here).
-# Used as a dependency when building the wasm32-wasip1 harness.  The crate
-# compiles cleanly for wasm — cargo silently drops the dylib crate-type.
-rt_path = "/path/to/reussir/runtime"
+# LLVM's WebAssembly-aware strip tool.
+llvm_strip_path = "../llvm/bin/llvm-strip"
 
-# Directory containing the compiler's shared libraries (libMLIRReussirBridge.so etc.).
-# Required when using the landlock sandbox so the restricted compiler process
-# can still dlopen its own dependencies.
-lib_path = "/path/to/reussir/build/lib"
+# Optional overrides; otherwise resolved from PATH.
+# rustc_path = "../rust-toolchain/bin/rustc"
+# cargo_path = "../rust-toolchain/bin/cargo"
 
-# Shared Cargo target directory for caching harness builds across requests.
-# Using a fixed path avoids recompiling reussir-rt on every run request.
-cargo_target_dir = "playground-target"
+# Rene caches its baked wasm32-wasip1 runtime and build records here.
+build_dir = "playground-build"
 
-# Timeout (seconds) for a single reussir-compiler invocation.
+# Optional writable Cargo cache used while Rene bakes its embedded runtime.
+# Defaults to <build_dir>/cargo-home.
+# cargo_home = "playground-build/cargo-home"
+
+# Additional read-only roots required inside the compiler sandbox.
+# Docker uses this for its rustup/Cargo installations.
+toolchain_ro_paths = []
+
 compile_timeout_secs = 30
-
-# Timeout (seconds) for `cargo build --target wasm32-wasip1`.
-# First build per session is slow (compiles reussir-rt for wasm); subsequent
-# builds are fast thanks to the shared target dir.
-cargo_timeout_secs = 180
+build_timeout_secs = 300
 
 [sandbox]
-# Sandboxing backend for compiler invocations.
-#
-#   "bwrap"    — bubblewrap (recommended); requires bwrap in PATH or set
-#                bwrap_path below.  Unshares user/IPC/network namespaces and
-#                presents a minimal read-only rootfs.
-#
-#   "landlock" — Linux Landlock LSM (kernel ≥ 5.13); applied via pre_exec.
-#                No setuid helper needed.  Falls back to no-sandbox on older
-#                kernels with a warning.
-#
-#   "none"     — no sandboxing; for local development only.
-kind = "bwrap"
+# "bwrap", "landlock", or "none". Use "none" for local macOS development.
+kind = "none"
 
-# Optional: explicit path to the bwrap binary.
-# bwrap_path = "/usr/bin/bwrap"
+# Optional: explicit path to bubblewrap.
+# bwrap_path = "../bin/bwrap"

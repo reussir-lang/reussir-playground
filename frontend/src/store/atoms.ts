@@ -8,7 +8,6 @@ export const themeAtom = atomWithStorage<Theme>("theme", "dark");
 
 // --- Editor content ---
 export const sourceCodeAtom = atom(examples[0]!.source);
-export const driverCodeAtom = atom(examples[0]!.driver);
 
 // --- Toolbar selections ---
 export const selectedExampleIndexAtom = atom(0);

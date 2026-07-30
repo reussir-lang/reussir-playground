@@ -1,5 +1,6 @@
 /target/
 /playground-target/
+/playground-build/
 .envrc
 config.toml
 /frontend/node_modules/

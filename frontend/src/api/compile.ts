@@ -3,7 +3,6 @@ import type { Mode, OptLevel } from "@/store/atoms";
 
 export interface CompileRequest {
   source: string;
-  driver: string;
   mode: Mode;
   opt: OptLevel;
   reuse_across_call: boolean;

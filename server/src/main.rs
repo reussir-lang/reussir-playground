@@ -1,9 +1,8 @@
 mod compile;
 mod config;
-mod harness;
 mod sandbox;
 
-use axum::{Router, routing::post};
+use axum::{routing::post, Router};
 use clap::Parser;
 use config::Config;
 use std::net::SocketAddr;
@@ -35,8 +34,7 @@ struct Cli {
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 

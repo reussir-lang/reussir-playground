@@ -2,7 +2,6 @@ import type { Mode, OptLevel } from "@/store/atoms";
 
 export interface SharedState {
   source: string;
-  driver: string;
   mode: Mode;
   opt: OptLevel;
   reuseAcrossCall?: boolean;
@@ -30,7 +29,6 @@ export function decodeState(hash: string): SharedState | null {
     const data = JSON.parse(json);
     if (
       typeof data.source === "string" &&
-      typeof data.driver === "string" &&
       typeof data.mode === "string" &&
       typeof data.opt === "string"
     ) {
