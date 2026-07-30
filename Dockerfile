@@ -14,20 +14,32 @@ ARG REUSSIR_NIGHTLY_SHA=nightly
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    jq \
     xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # REUSSIR_NIGHTLY_SHA is intentionally consumed as a cache key. The public
-# `nightly` release URL is stable while its assets are replaced on every build.
+# `nightly` release is stable while its date-stamped assets are replaced on
+# every build, so resolve the current architecture-specific URL via the API.
 RUN echo "nightly=${REUSSIR_NIGHTLY_SHA}" \
     && case "${TARGETARCH}" in \
          amd64) REUSSIR_ARCH=x86_64 ;; \
          arm64) REUSSIR_ARCH=aarch64 ;; \
          *) echo "unsupported Docker architecture: ${TARGETARCH}" >&2; exit 1 ;; \
        esac \
-    && ASSET="reussir-nightly-linux-${REUSSIR_ARCH}.tar.xz" \
+    && ASSET_SUFFIX="-linux-${REUSSIR_ARCH}.tar.xz" \
+    && ASSET_URL="$( \
+         curl --fail --silent --show-error --location --retry 5 \
+           --header "Accept: application/vnd.github+json" \
+           --header "X-GitHub-Api-Version: 2022-11-28" \
+           "https://api.github.com/repos/reussir-lang/reussir/releases/tags/nightly" \
+         | jq --exit-status --raw-output --arg suffix "${ASSET_SUFFIX}" \
+           '[.assets[] | select(.name | endswith($suffix))] \
+            | if length == 1 then .[0].browser_download_url \
+              else error("expected exactly one matching nightly asset") end' \
+       )" \
     && curl --fail --location --retry 5 \
-       "https://github.com/reussir-lang/reussir/releases/download/nightly/${ASSET}" \
+       "${ASSET_URL}" \
        --output /tmp/reussir-nightly.tar.xz \
     && mkdir -p /opt/reussir \
     && tar -xJf /tmp/reussir-nightly.tar.xz --strip-components=1 -C /opt/reussir \
