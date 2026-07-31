@@ -55,7 +55,7 @@ export function SourceEditor() {
       options={{
         fontSize: 13,
         fontFamily:
-          "'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace",
+          "'IBM Plex Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace",
         lineHeight: 20,
         minimap: { enabled: false },
         scrollBeyondLastLine: false,

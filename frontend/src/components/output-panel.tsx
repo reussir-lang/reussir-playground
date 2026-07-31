@@ -71,13 +71,13 @@ export function OutputPanel() {
 
   return (
     <div className="flex flex-col min-h-0 h-full">
-      <div className="px-3 py-1.5 bg-bg-elevated text-[11px] font-semibold text-text-secondary uppercase tracking-wider border-b border-border shrink-0 flex items-center">
-        <span>{label}</span>
+      <div className="pane-header px-3 py-2 text-[10px] font-semibold text-text-secondary uppercase tracking-[0.14em] border-b border-border shrink-0 flex items-center">
+        <span className="pane-kicker">{label}</span>
         {output.kind === "success" && (
           <button
             type="button"
             onClick={handleDownload}
-            className="ml-auto p-0.5 rounded text-text-secondary hover:text-text-primary transition-colors"
+            className="toolbar-icon ml-auto h-6 w-6 inline-flex items-center justify-center rounded-md transition-all"
             title={`Download as .${MODE_EXT[mode] ?? "txt"}`}
           >
             <Download size={12} />
@@ -85,8 +85,8 @@ export function OutputPanel() {
         )}
       </div>
       {output.kind === "idle" ? (
-        <div className="flex-1 flex items-center justify-center p-6 min-h-0">
-          <p className="text-text-secondary text-sm text-center">
+        <div className="idle-state flex-1 flex items-center justify-center p-6 min-h-0">
+          <p className="idle-state-badge max-w-md rounded-2xl px-5 py-3 text-xs sm:text-sm text-center leading-relaxed">
             {output.text}
           </p>
         </div>
@@ -102,7 +102,7 @@ export function OutputPanel() {
               domReadOnly: true,
               fontSize: 13,
               fontFamily:
-                "'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace",
+                "'IBM Plex Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace",
               lineHeight: 20,
               minimap: { enabled: false },
               scrollBeyondLastLine: false,

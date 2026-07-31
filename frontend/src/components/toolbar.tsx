@@ -63,11 +63,13 @@ const OPT_OPTIONS: {
 ];
 
 const MENU_CONTENT_CLASS =
-  "z-50 min-w-[220px] rounded-md border border-border bg-bg-elevated p-1 shadow-lg";
+  "menu-content z-50 min-w-[230px] rounded-xl p-1.5";
 const MENU_ITEM_CLASS =
-  "flex flex-col gap-0.5 rounded-sm px-2 py-1.5 text-[13px] cursor-default outline-none focus:bg-bg-input-hover data-highlighted:bg-bg-input-hover";
+  "menu-item flex flex-col gap-0.5 rounded-lg px-2.5 py-2 text-[13px] cursor-default outline-none transition-colors";
 const TRIGGER_CLASS =
-  "h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-border-input bg-bg-input text-text-primary text-[13px] hover:bg-bg-input-hover transition-colors";
+  "control-trigger h-8 min-w-0 px-3 inline-flex items-center gap-1.5 rounded-xl text-text-primary text-[13px] transition-all";
+const ICON_BUTTON_CLASS =
+  "toolbar-icon h-8 w-8 inline-flex items-center justify-center rounded-lg transition-all";
 
 export function Toolbar() {
   const [selectedExample, setSelectedExample] = useAtom(
@@ -113,10 +115,12 @@ export function Toolbar() {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 bg-bg-secondary border-b border-border shrink-0">
-      <span className="text-base font-bold text-text-heading whitespace-nowrap flex items-center gap-2">
-        <img src="/image.png" alt="Reussir" className="h-6 w-6" />
-        <span className="hidden sm:inline">Reussir Playground</span>
+    <header className="playground-toolbar flex flex-wrap items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-2 shrink-0">
+      <span className="text-text-heading whitespace-nowrap flex items-center gap-2">
+        <span className="brand-wordmark text-base sm:text-lg font-bold">Reussir</span>
+        <span className="brand-tag hidden sm:inline-flex items-center rounded-full px-2 py-1 text-[9px] font-semibold">
+          Playground
+        </span>
       </span>
 
       <div className="hidden sm:block h-4 w-px bg-border-subtle" />
@@ -127,7 +131,7 @@ export function Toolbar() {
           type="button"
           onClick={compile}
           disabled={isCompiling}
-          className="h-8 px-3 text-[13px] font-semibold bg-accent text-white hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed rounded-l-md border border-accent transition-colors"
+          className="run-button h-8 px-3 text-[13px] font-bold disabled:opacity-60 disabled:cursor-not-allowed rounded-l-xl border transition-all"
           title="Compile and run (Ctrl+Enter)"
         >
           {buttonText}
@@ -137,7 +141,7 @@ export function Toolbar() {
             <button
               type="button"
               disabled={isCompiling}
-              className="h-8 px-1.5 bg-accent text-white hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed rounded-r-md border border-l-0 border-accent transition-colors flex items-center"
+              className="run-menu-button h-8 px-1.5 disabled:opacity-60 disabled:cursor-not-allowed rounded-r-xl border border-l-0 transition-all flex items-center"
               title="Change mode"
             >
               <ChevronDown size={14} />
@@ -176,12 +180,17 @@ export function Toolbar() {
       <div className="hidden sm:block h-4 w-px bg-border-subtle" />
 
       {/* Config group: example + optimization */}
-      <div className="flex items-center gap-1.5">
+      <div className="toolbar-config flex flex-wrap items-center gap-1.5">
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button type="button" className={TRIGGER_CLASS}>
+            <button
+              type="button"
+              className={`${TRIGGER_CLASS} max-w-[18rem] flex-1 sm:flex-none`}
+            >
               <FileCode size={14} />
-              {examples[selectedExample]?.name ?? "Example"}
+              <span className="truncate">
+                {examples[selectedExample]?.name ?? "Example"}
+              </span>
               <ChevronDown size={14} className="opacity-50" />
             </button>
           </DropdownMenu.Trigger>
@@ -216,10 +225,12 @@ export function Toolbar() {
 
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button type="button" className={TRIGGER_CLASS}>
+            <button type="button" className={`${TRIGGER_CLASS} flex-1 sm:flex-none`}>
               <Gauge size={14} />
-              {OPT_OPTIONS.find((o) => o.value === optLevel)?.label ??
-                "Optimization"}
+              <span className="truncate">
+                {OPT_OPTIONS.find((o) => o.value === optLevel)?.label ??
+                  "Optimization"}
+              </span>
               <ChevronDown size={14} className="opacity-50" />
             </button>
           </DropdownMenu.Trigger>
@@ -254,7 +265,7 @@ export function Toolbar() {
 
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button type="button" className={TRIGGER_CLASS}>
+            <button type="button" className={`${TRIGGER_CLASS} flex-1 sm:flex-none`}>
               <Settings size={14} />
               Options
               <ChevronDown size={14} className="opacity-50" />
@@ -274,7 +285,7 @@ export function Toolbar() {
               >
                 <span className="font-medium text-text-primary flex items-center gap-2">
                   <span
-                    className={`inline-flex items-center justify-center h-4 w-4 rounded border text-[10px] ${reuseAcrossCall ? "bg-accent border-accent text-white" : "border-border-input bg-bg-input"}`}
+                    className={`inline-flex items-center justify-center h-4 w-4 rounded border text-[10px] ${reuseAcrossCall ? "bg-accent border-accent text-accent-contrast" : "border-border-input bg-bg-input"}`}
                   >
                     {reuseAcrossCall && "✓"}
                   </span>
@@ -290,11 +301,11 @@ export function Toolbar() {
         </DropdownMenu.Root>
       </div>
 
-      <div className="flex items-center gap-1 sm:ml-auto">
+      <div className="toolbar-actions flex items-center gap-1 sm:ml-auto">
         <button
           type="button"
           onClick={handleShare}
-          className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+          className={ICON_BUTTON_CLASS}
           title="Copy source code"
         >
           <Share2 size={16} />
@@ -304,7 +315,7 @@ export function Toolbar() {
           href="https://reussir-lang.github.io/"
           target="_blank"
           rel="noopener noreferrer"
-          className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+          className={ICON_BUTTON_CLASS}
           title="Documentation"
         >
           <BookOpen size={16} />
@@ -314,7 +325,7 @@ export function Toolbar() {
           href="https://github.com/reussir-lang/reussir"
           target="_blank"
           rel="noopener noreferrer"
-          className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+          className={ICON_BUTTON_CLASS}
           title="Source code"
         >
           <LucideGithub size={16} />
@@ -323,12 +334,12 @@ export function Toolbar() {
         <button
           type="button"
           onClick={toggleTheme}
-          className="h-8 w-8 inline-flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-bg-input-hover transition-colors"
+          className={ICON_BUTTON_CLASS}
           title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
       </div>
-    </div>
+    </header>
   );
 }

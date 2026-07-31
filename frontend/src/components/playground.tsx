@@ -16,9 +16,9 @@ export function Playground() {
   const isMobile = useIsMobile();
 
   return (
-    <>
+    <main className="playground-shell">
       <Toolbar />
-      <div className="flex-1 min-h-0">
+      <div className="playground-workspace">
         <Group
           orientation={isMobile ? "vertical" : "horizontal"}
           key={isMobile ? "vertical" : "horizontal"}
@@ -30,8 +30,8 @@ export function Playground() {
           <Separator
             className={
               isMobile
-                ? "h-2.5 bg-bg-secondary border-y border-border-subtle hover:bg-divider-hover active:bg-divider-active relative touch-none flex items-center justify-center transition-colors"
-                : "w-2.5 bg-bg-secondary border-x border-border-subtle hover:bg-divider-hover active:bg-divider-active relative touch-none flex items-center justify-center transition-colors"
+                ? "editor-divider h-2.5 border-y border-border-subtle relative touch-none flex items-center justify-center transition-colors"
+                : "editor-divider w-2.5 border-x border-border-subtle relative touch-none flex items-center justify-center transition-colors"
             }
           >
             {isMobile ? (
@@ -46,6 +46,6 @@ export function Playground() {
           </Panel>
         </Group>
       </div>
-    </>
+    </main>
   );
 }
