@@ -24,15 +24,15 @@ export function EditorPane() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="px-3 py-1.5 bg-bg-elevated text-[11px] font-semibold text-text-secondary uppercase tracking-wider border-b border-border shrink-0 flex items-center">
-        <span>Reussir Source</span>
-        <span className="ml-2 normal-case font-normal tracking-normal text-text-secondary">
+      <div className="pane-header px-3 py-2 text-[10px] font-semibold text-text-secondary uppercase tracking-[0.14em] border-b border-border shrink-0 flex items-center">
+        <span className="pane-kicker">Reussir Source</span>
+        <span className="ml-2 hidden sm:inline normal-case font-normal tracking-normal text-text-secondary">
           PolyFFI and entry point included
         </span>
         <button
           type="button"
           onClick={handleDownload}
-          className="ml-auto p-0.5 rounded text-text-secondary hover:text-text-primary transition-colors"
+          className="toolbar-icon ml-auto h-6 w-6 inline-flex items-center justify-center rounded-md transition-all"
           title="Download as .rr"
         >
           <Download size={12} />
