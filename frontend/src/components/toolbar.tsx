@@ -312,7 +312,7 @@ export function Toolbar() {
         </button>
 
         <a
-          href="https://reussir-lang.org/"
+          href="https://reussir-lang.github.io/"
           target="_blank"
           rel="noopener noreferrer"
           className={ICON_BUTTON_CLASS}
